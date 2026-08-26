@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lyricist's Lexicon — Rath Hy</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="nav">
+    <a href="index.html" class="nav-name">ហ៊ី ពុទ្ធីរតន៍</a>
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="lyricists-lexicon.html" class="active">Lyricist's Lexicon</a></li>
+      <li><a href="anota.html">Anota</a></li>
+      <li><a href="doodles.html">Doodles</a></li>
+      <li><a href="travel.html">Travel</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h1>Lyricist's Lexicon</h1>
+  <p>
+    Nicknamed the Poet's Bible, the Lyricist's Lexicon is a pair of books: a dictionary
+    of rhymes and a dictionary of consonance. Both are free to download below.
+  </p>
+
+  <ul class="download-list">
+    <li><a href="#">[Rhyme] ចួន.pdf</a></li>
+    <li><a href="#">[Consonance] រណ្ដំ.pdf</a></li>
+  </ul>
+
+  <p>A website version is hosted at <a href="https://poet.puthyrathy.com" target="_blank" rel="noopener">poet.puthyrathy.com</a>:</p>
+  <iframe class="embed-frame" src="https://poet.puthyrathy.com" height="600" title="Lyricist's Lexicon website"></iframe>
+
+  <p><a href="https://substack.com/home/post/p-192805991" target="_blank" rel="noopener">Read the story behind the books on Substack</a></p>
+</main>
+
+<script>
+  const toggle = document.querySelector('.nav-toggle');
+  const links = document.querySelector('.nav-links');
+  toggle.addEventListener('click', () => {
+    const open = links.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open);
+  });
+</script>
+
+</body>
+</html>

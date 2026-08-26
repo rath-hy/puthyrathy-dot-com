@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doodles — Rath Hy</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="nav">
+    <a href="index.html" class="nav-name">ហ៊ី ពុទ្ធីរតន៍</a>
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="lyricists-lexicon.html">Lyricist's Lexicon</a></li>
+      <li><a href="anota.html">Anota</a></li>
+      <li><a href="doodles.html" class="active">Doodles</a></li>
+      <li><a href="travel.html">Travel</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h1>Doodles</h1>
+  <p>Work in progress.</p>
+</main>
+
+<script>
+  const toggle = document.querySelector('.nav-toggle');
+  const links = document.querySelector('.nav-links');
+  toggle.addEventListener('click', () => {
+    const open = links.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open);
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rath Hy</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="nav">
+    <a href="index.html" class="nav-name">ហ៊ី ពុទ្ធីរតន៍</a>
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="lyricists-lexicon.html">Lyricist's Lexicon</a></li>
+      <li><a href="anota.html">Anota</a></li>
+      <li><a href="doodles.html">Doodles</a></li>
+      <li><a href="travel.html">Travel</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h1>Hello! I'm Rath.</h1>
+  <p>
+    I'm a rising senior studying electrical engineering and computer sciences (EECS)
+    at UC Berkeley. I grew up in Phnom Penh, Cambodia.
+  </p>
+
+  <img class="profile-photo" src="images/profile.jpg" alt="Rath looking up, mid-conversation">
+  <p class="photo-caption">Caught ogling a bird, circa 2025</p>
+
+  <h2>Code</h2>
+  <p>GitHub: <a href="https://github.com/rath-hy" target="_blank" rel="noopener">github.com/rath-hy</a></p>
+  <ul class="section-list">
+    <li>In 2022, I created the <a href="lyricists-lexicon.html">Lyricist's Lexicon</a>, Cambodia's first dictionaries of rhyme and consonance.</li>
+    <li>Since the start of 2026, I've been working on <a href="anota.html">Anota</a>, a platform that allows you to annotate any link.</li>
+  </ul>
+
+  <h2>Writing</h2>
+  <p>I blog on <a href="https://substack.com/@rathhy" target="_blank" rel="noopener">Substack</a>.</p>
+
+  <h2>Miscellaneous</h2>
+  <p>
+    This summer I'll be doing a cross-country road trip from San Francisco to New York.
+    The itinerary was curated to hit the maximum number of historically significant sites.
+    I'll document the adventure <a href="travel.html">here</a>!
+  </p>
+
+  <h2>Get in touch</h2>
+  <p>Send me a message at <a href="mailto:puthyrathy@gmail.com">puthyrathy@gmail.com</a> :)</p>
+</main>
+
+<script>
+  const toggle = document.querySelector('.nav-toggle');
+  const links = document.querySelector('.nav-links');
+  toggle.addEventListener('click', () => {
+    const open = links.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open);
+  });
+</script>
+
+</body>
+</html>
