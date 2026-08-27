@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Postcards — Rath Hy</title>
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="nav">
+    <a href="index.html" class="nav-name">ហ៊ី ពុទ្ធីរតន៍</a>
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="lyricists-lexicon.html">Lyricist's Lexicon</a></li>
+      <li><a href="writing.html">Writing</a></li>
+      <li><a href="postcards.html" class="active">Postcards</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h1 class="travel-heading">Postcards</h1>
+  <p class="page-description">This is an experiment in communicating the interior of my experience. Click on a postcard once to see it in full screen, and click again to see its caption on the back.</p>
+
+  <div id="sections"></div>
+</main>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" aria-label="Close">&times;</button>
+  <div class="lightbox-card">
+    <div class="lightbox-inner">
+      <div class="lightbox-face lightbox-face-front"></div>
+      <div class="lightbox-face lightbox-face-back">
+        <p></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const toggle = document.querySelector('.nav-toggle');
+  const links = document.querySelector('.nav-links');
+  toggle.addEventListener('click', () => {
+    const open = links.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open);
+  });
+
+  // Each section groups a set of postcards under a title + description.
+  // Add a new object to SECTIONS to start a new trip/grouping — it gets
+  // its own heading, subtitle, and card grid.
+  //
+  // Per card: use "photo" for a still image, or "video" for a clip
+  // (< 10s recommended). Videos autoplay on loop with no controls —
+  // there's no way to pause them. Add "full: true" to give a card its
+  // own row at its original aspect ratio (no cropping) instead of the
+  // standard 3:2 grid slot — other postcards flow around it automatically.
+  const SECTIONS = [
+    {
+      title: "Transcontinental Road Trip",
+      description: "I drove from San Francisco to New York City. Below is a very small collection of interesting things I saw.",
+      cards: [
+        { video: "videos/tahoe.mp4", full: true, caption: "The serenity of Lake Tahoe." },
+        { photo: "images/utah-capitol.jpg", caption: "The Utah State Capitol, in which stands a marvelous statue of Brigham Young that I failed to photograph flatteringly." },
+        { photo: "images/amish.jpg", caption: "The Amish people I glimpsed in bumfuck nowhere, Wyoming, where I had to brave a snowstorm in the middle of summer."},
+
+        { photo: "images/fine-dining.jpg", full: true, caption: "The fine dining I frequently enjoyed." },
+
+        { photo: "images/hoover-outside.jpg", caption: "The cottage in Iowa where Herbert Hoover was born." },
+        { photo: "images/hoover-inside.jpg", caption: "The inside of Hoover's cottage." },
+        { photo: "images/hoover-classroom.jpg", caption: "The schoolhouse Hoover may have attended." },
+
+        { video: "videos/chicago.mp4", caption: "The Chicago Riverwalk." },
+        { photo: "images/pizza.jpg", caption: "The famous (but dogshit) Chicago-style deep-dish pizza." },
+
+        { photo: "images/franklin-bust.jpg", full: true, caption: "The bust of Benjamin Franklin, the man I so admired I took a nickname after him, until a friend said that Ben is a dog's name."},
+        { photo: "images/franklin-walkway.jpg", caption: "The archway through which Franklin once walked."},
+        { photo: "images/zombies.jpg", caption: "The zombies of Kensington Avenue in Philadelphia."},
+
+        { photo: "images/funeral.jpg", caption: "The funeral I attended in New Jersey, during which I experienced the harrowing pressing of the button of the cremator."},
+        
+        // { photo: "images/", caption: "?" },
+        // { video: "chicago/", caption: "?" },
+      ]
+    },
+
+    {
+      title: "Portugal",
+      description: "Saudade.",
+      cards: [
+        { photo: "images/portugal/inhaler.jpeg", full: true, caption: "The herbal inhaler from which I was inseperable until its untimely disappearance during a frisbee game."},
+        { video: "videos/fight.mp4", full: true, caption: "The American-esque scene that greeted us our first night in Lisbon." },
+        { photo: "images/portugal/me.jpg", caption: "The cruise in Lagos." },
+        { photo: "images/portugal/group.jpg", caption: "The group of travelers from Berkeley." },
+        { photo: "images/portugal/dvorak-church.jpg", full: true, caption: "The church in Coimbra where I listened to the fourth movement of Dvořák's New World symphony." },
+        { photo: "images/portugal/cambodian-sanctuary.jpg", caption: "The inside of the bar in Lagos named Cambodian Refuge, whose owner coldly informed me that they had no connection to Cambodia besides having visited once." },
+        { photo: "images/portugal/pessoa.jpg", caption: "The Book of Disquiet, purchased at the bookstore in Porto falsely thought to have inspired J.K. Rowling." },
+      ]
+    },
+
+    {
+      title: "France",
+      description: "Where I saw beauty so profound I'm almost proud to have been colonized.",
+      cards: [
+        { photo: "images/france/guillotine.jpg", full: true, caption: "The guillotine I saw in Marseille." },
+        { photo: "images/france/icecream.jpg", caption: "The desert of the heaviest meal I've had in my life, at a <em>Bouchon Lyonnais</em>." },
+        { photo: "images/france/mushrooms.jpg", caption: "The guide to the world beyond." },
+        { video: "videos/nice.mp4", full: true, caption: "The seductiveness of Nice, where I experienced my first <em>plage de galets</em> thanks to Hugo, the handsome stranger who watched my stuff while I swam." },
+
+        { photo: "images/france/de-gaulle.jpg", caption: "The dining table in Charles de Gaulle's childhood home." },
+        { photo: "images/france/mont-saint-michel.jpg", caption: "The monument I visited only because I mistook Caen for Cosne-Cours-sur-Loire." },
+        { photo: "images/france/swastika.jpg", caption: "The Mémorial de Caen, which, fittingly, is the most memorable museum I've ever visited." },
+
+        { photo: "images/france/proust.jpg", caption: "The bed in which Marcel Proust lay writing <em>In Search of Lost Time</em>, on which he spent a total of thirteen years." },
+        { photo: "images/france/voltaire.jpg", full: true, caption: "The tomb of Voltaire." },
+        { video: "videos/eiffel.mp4", full: true, caption: "The surprise I felt when the Eiffel Tower started sparkling freed me momentarily from the pain of being single and alone in the City of Love."}
+
+      ]
+    },
+
+    {
+      title: "Italy",
+      description: "",
+      cards: [
+        { photo: "images/italy/ponte-di-rialto.jpg", full: true, caption: "The view from the famous Ponte di Rialto." }, 
+        { photo: "images/italy/menorah.jpg", caption: "The captivating menorah painting in the Jewish restaurant where I ate better than anywhere else in Europe, located in the area that was the first Jewish ghetto in history." }, 
+        { photo: "images/italy/venice-canal.jpg", caption: "The canal in Venice no one warned me would be so stinky." }, 
+
+        { photo: "images/italy/brunelleschi.jpg", caption: "The grand duomo I could only marvel at from the outside, because I hadn't been smart enough to book tickets in advance." }, 
+        { photo: "images/italy/lorenzo.jpeg", caption: "The Magnificient." }, 
+        { photo: "images/italy/tourists.jpg", full: true, caption: "The enormity of the crowd of tourists who, given how briefly they actually <em>look</em> at — as opposed to pose for pictures with their backs turned towards — what they've presumably journeyed so far to see, are a work of art in their own right." }, 
+
+        { photo: "images/italy/scammer.jpg", caption: "The gentleman who scammed me by slapping an unwanted bracelet onto my wrist as I was walking past, first pretending it was free before asking for some change for his daughter, then snatching a fifty euro bill from my hand when I'd intended to give him only five, and on whom I stopped myself from calling the cops only by reminding myself that he probably wouldn't scam for a living if he didn't need to." }, 
+        { photo: "images/italy/masturbator.jpg", caption: "The drunk Hercules peeing lightheartedness onto passersby."},
+        { photo: "images/italy/rome-pantheon.jpg", full: true, caption: "The Roman Pantheon, which inspired both Thomas Jefferson and Rath Hy." }, 
+        { photo: "images/italy/capitoline-hill.jpg", full: true, caption: "The fallopian tube of <em>Decline and Fall of the Roman Empire</em>." }, 
+      ]
+    },
+
+    {
+      title: "Under construction...",
+      description: "Phnom Penh, Singapore, Berkeley, Spain...",
+      cards: []
+    }
+  ];
+
+  const sectionsContainer = document.getElementById('sections');
+  const grids = [];
+
+  // Videos don't download or play until they're about to scroll into
+  // view, and pause again once they scroll out — with several video
+  // postcards across sections, autoplaying all of them immediately
+  // would be a lot of unnecessary data and battery on a phone.
+  const videoObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const video = entry.target;
+      if (entry.isIntersecting) {
+        if (!video.src) video.src = video.dataset.src;
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+  }, { rootMargin: '200px 0px' });
+
+  SECTIONS.forEach((section) => {
+    const sectionEl = document.createElement('section');
+    sectionEl.className = 'travel-section';
+
+    const grid = document.createElement('div');
+    grid.className = 'card-grid';
+
+    sectionEl.innerHTML = `
+      <h2 class="section-title">${section.title}</h2>
+      <p class="section-description">${section.description}</p>
+    `;
+    sectionEl.appendChild(grid);
+    sectionsContainer.appendChild(sectionEl);
+    grids.push(grid);
+
+    (section.cards || []).forEach((data) => {
+      const card = document.createElement('div');
+      card.className = data.full ? 'card full' : 'card';
+      card.dataset.caption = data.caption;
+
+      const media = document.createElement(data.video ? 'video' : 'img');
+      if (data.video) {
+        media.dataset.src = data.video;
+        media.muted = true;
+        media.loop = true;
+        media.playsInline = true;
+        media.setAttribute('disablepictureinpicture', '');
+        media.setAttribute('disableremoteplayback', '');
+        media.preload = 'none';
+        videoObserver.observe(media);
+      } else {
+        media.src = data.photo;
+        media.alt = 'Travel photo';
+        media.loading = 'lazy';
+        media.decoding = 'async';
+      }
+
+      const mediaWrap = document.createElement('div');
+      mediaWrap.className = 'card-media';
+      mediaWrap.appendChild(media);
+      card.appendChild(mediaWrap);
+
+      card.addEventListener('click', () => openLightbox(card));
+      grid.appendChild(card);
+    });
+  });
+
+  // Lightbox: click 1 expands the postcard to its full, uncropped size;
+  // click 2 flips it to the caption; click 3 (or the backdrop / Escape)
+  // closes it. The actual <img>/<video> node is moved into the lightbox
+  // and back again on close, rather than cloned, so a playing video
+  // never has to reload.
+  const lightbox = document.getElementById('lightbox');
+  const lightboxFront = lightbox.querySelector('.lightbox-face-front');
+  const lightboxBack = lightbox.querySelector('.lightbox-face-back p');
+  let activeCard = null;
+  let activeMediaWrap = null;
+
+  function openLightbox(card) {
+    activeCard = card;
+    activeMediaWrap = card.querySelector('.card-media');
+    const media = activeMediaWrap.querySelector('img, video');
+
+    lightboxFront.appendChild(media);
+    lightboxBack.innerHTML = card.dataset.caption;
+    lightbox.classList.remove('flipped');
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    if (!activeCard) return;
+    const media = lightboxFront.querySelector('img, video');
+    if (media) activeMediaWrap.appendChild(media);
+    lightbox.classList.remove('open', 'flipped');
+    document.body.style.overflow = '';
+    activeCard = null;
+    activeMediaWrap = null;
+  }
+
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox || e.target.closest('.lightbox-close')) {
+      closeLightbox();
+    } else if (!lightbox.classList.contains('flipped')) {
+      lightbox.classList.add('flipped');
+    } else {
+      closeLightbox();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  // If a normal card ends up alone on its row (its neighbor moved to
+  // the next row because of a .full card next to it), center it instead
+  // of leaving it pinned to the left edge. Runs per section grid.
+  function centerLoneCards(grid) {
+    const cards = Array.from(grid.querySelectorAll('.card'));
+    cards.forEach((c) => {
+      c.classList.remove('lone');
+      c.style.width = '';
+    });
+
+    const referenceCard = cards.find((c) => !c.classList.contains('full'));
+    if (!referenceCard) return;
+    const referenceWidth = referenceCard.getBoundingClientRect().width;
+
+    const rows = new Map();
+    cards.forEach((c) => {
+      const top = c.offsetTop;
+      if (!rows.has(top)) rows.set(top, []);
+      rows.get(top).push(c);
+    });
+
+    rows.forEach((rowCards) => {
+      if (rowCards.length === 1 && !rowCards[0].classList.contains('full')) {
+        rowCards[0].classList.add('lone');
+        rowCards[0].style.width = `${referenceWidth}px`;
+      }
+    });
+  }
+
+  function centerAllLoneCards() {
+    grids.forEach(centerLoneCards);
+  }
+
+  centerAllLoneCards();
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(centerAllLoneCards, 150);
+  });
+</script>
+
+</body>
+</html>
