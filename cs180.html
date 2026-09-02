@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS180 Project 0 — Puthyrath Hy</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: #ffffff;
+    color: #1a1a1a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 64px 24px 100px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 72px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin: 0 0 8px;
+  }
+
+  .author {
+    font-size: 1.1rem;
+    color: #6b6b6b;
+    margin: 0;
+  }
+
+  section {
+    margin-bottom: 80px;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    margin: 0 0 4px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  .subject {
+    font-size: 1rem;
+    font-style: italic;
+    color: #6b6b6b;
+    margin: 16px 0 24px;
+  }
+
+  .photo-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .photo-single {
+    display: flex;
+    justify-content: center;
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  figure img {
+    width: 100%;
+    height: auto;
+    max-height: 480px;
+    object-fit: contain;
+    display: block;
+    border-radius: 4px;
+    background: #f4f4f4;
+    margin: 0 auto;
+  }
+
+  .photo-single img {
+    max-width: 420px;
+  }
+
+  figcaption {
+    font-size: 0.9rem;
+    color: #6b6b6b;
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  .explanation {
+    margin-top: 28px;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  @media (max-width: 640px) {
+    .photo-pair {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<main>
+  <header>
+    <h1>CS180 Project 0</h1>
+    <p class="author">Puthyrath Hy</p>
+  </header>
+
+  <section>
+    <h2>Part 1: Selfie</h2>
+    <p class="subject">Subject: Phoebe</p>
+    <div class="photo-pair">
+      <figure>
+        <img src="images/cs180/part1-close-up-no-zoom.jpg" alt="Phoebe photographed close-up with no zoom">
+        <figcaption>Close-up, no zoom</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180/part1-far-away-zoom.jpeg" alt="Phoebe photographed from far away, zoomed in">
+        <figcaption>Far away, zoomed in</figcaption>
+      </figure>
+    </div>
+    <p class="explanation">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+  </section>
+
+  <section>
+    <h2>Part 2: Architectural Perspective</h2>
+    <p class="subject">Subject: UC Berkeley's Anthropology and Art Practice Building</p>
+    <div class="photo-pair">
+      <figure>
+        <img src="images/cs180/part2-closer-less-zoom.jpg" alt="The Anthropology and Art Practice building photographed up close with less zoom">
+        <figcaption>Closer, less zoom</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180/part2-far-away-zoom.jpg" alt="The Anthropology and Art Practice building photographed from far away, zoomed in">
+        <figcaption>Far away, zoomed in</figcaption>
+      </figure>
+    </div>
+    <p class="explanation">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+  </section>
+
+  <section>
+    <h2>Part 3: The Dolly Zoom</h2>
+    <p class="subject">Subject: My dear Hydroflask</p>
+    <div class="photo-single">
+      <figure>
+        <img src="images/cs180/part3.gif" alt="Dolly zoom effect on a Hydroflask, moving backward while zooming in">
+        <figcaption>Dolly zoom</figcaption>
+      </figure>
+    </div>
+    <p class="explanation">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+  </section>
+</main>
+
+</body>
+</html>
