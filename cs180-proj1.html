@@ -78,94 +78,69 @@
     border-color: #1a1a1a;
   }
 
-  section {
-    margin-bottom: 80px;
+  .md-cell {
+    margin: 28px 0;
   }
 
-  h2 {
+  .md-cell h1, .md-cell h2, .md-cell h3 {
+    margin: 40px 0 4px;
+  }
+
+  .md-cell h2 {
     font-size: 1.4rem;
-    margin: 0 0 4px;
     padding-bottom: 12px;
     border-bottom: 1px solid #e5e5e5;
   }
 
-  h3 {
+  .md-cell h3 {
     font-size: 1.1rem;
-    margin: 40px 0 4px;
   }
 
-  .subject {
-    font-size: 1rem;
-    font-style: italic;
-    color: #6b6b6b;
-    margin: 16px 0 24px;
-  }
-
-  .photo-pair {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-
-  .photo-trio {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-    align-items: start;
-  }
-
-  .gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 20px;
-  }
-
-  figure {
-    margin: 0;
-  }
-
-  figure img {
-    width: 100%;
-    height: auto;
-    max-height: 480px;
-    object-fit: contain;
-    display: block;
-    border-radius: 4px;
-    background: #f4f4f4;
-    margin: 0 auto;
-  }
-
-  figcaption {
-    font-size: 0.85rem;
-    color: #6b6b6b;
-    text-align: center;
-    margin-top: 8px;
-  }
-
-  figcaption .name {
-    display: block;
-    color: #1a1a1a;
-    font-weight: 600;
-  }
-
-  .explanation {
-    margin-top: 28px;
-    font-size: 1rem;
+  .md-cell p, .md-cell li {
     color: #333;
   }
 
-  .explanation code {
+  .md-cell code {
     background: #f4f4f4;
     padding: 1px 5px;
     border-radius: 3px;
     font-size: 0.9em;
   }
 
-  @media (max-width: 640px) {
-    .photo-pair, .photo-trio {
-      grid-template-columns: 1fr;
-    }
+  .md-cell a {
+    color: #1a1a1a;
+  }
+
+  pre.code {
+    background: #f6f6f6;
+    border: 1px solid #ececec;
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    margin: 16px 0;
+  }
+
+  pre.output {
+    background: #fafafa;
+    border-left: 3px solid #ddd;
+    padding: 10px 14px;
+    overflow-x: auto;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    color: #444;
+    margin: 0 0 16px;
+    white-space: pre-wrap;
+  }
+
+  img.nb-img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    background: #f4f4f4;
+    margin: 0 0 16px;
   }
 </style>
 </head>
@@ -179,167 +154,351 @@
     </nav>
     <h1>CS180 Project 1: Images of the Russian Empire</h1>
     <p class="author">Puthyrath Hy</p>
-    <a class="notebook-link" href="https://github.com/rath-hy/cs180-proj1/blob/main/main.ipynb">View the notebook →</a>
+    <a class="notebook-link" href="https://github.com/rath-hy/cs180-proj1/blob/main/main.ipynb">View the notebook source →</a>
   </header>
 
-  <section>
-    <h2>How align.py works</h2>
-    <p class="explanation">For the sake of modularity, we'll implement the functions in <code>align.py</code>. With L2, the lower the score, the greater the alignment between two images. With NCC it's the reverse: the greater the score, the greater the alignment between two images. To make it easy for our align function to use switch between loss functions, we define <code>neg_ncc</code>, which just returns the negative of what <code>ncc</code> would.</p>
-    <p class="explanation"><strong><code>crop(img, frac=0.1)</code></strong> trims a fixed fraction off each edge before an image is scored against another. The glass-plate scans have a black border/frame around the actual photo, and that border isn't identical between the R, G, and B plates. If we scored the <em>uncropped</em> plates, the loss function would end up rewarding whatever shift best lines up border artifacts rather than the actual scene.</p>
-    <p class="explanation"><strong><code>single_scale_align(moving, fixed, window, loss)</code></strong> does brute-force exhaustive search. For every integer displacement <code>(dy, dx)</code> with <code>dy, dx</code> in <code>[-window, window]</code>, it shifts <code>moving</code> with <code>np.roll</code> (which wraps pixels around the border) and scores the shifted image against <code>fixed</code> with the chosen <code>loss</code> function, keeping whichever <code>(dy, dx)</code> scores best.</p>
-    <p class="explanation"><strong><code>pyramid_align(moving, fixed, ...)</code></strong> is what we need for full-resolution TIFFs. Since exhaustively searching a window wide enough to cover those images' true offsets at full resolution would be too slow, <code>pyramid_align</code> recursively downsamples images by half (<code>sktr.rescale(..., 0.5, anti_aliasing=True)</code>) until the smaller dimension drops below <code>min_size=200</code>. It then does one exhaustive <code>single_scale_align</code> search with a wide window (<code>big=15</code>) at that tiny base resolution, before unwinding one pyramid level at a time: at each level it doubles the offset estimate inherited from the coarser level (since one pixel at half-resolution corresponds to two pixels at full resolution) and refines it with a <em>small</em> exhaustive search (<code>small=3</code>) local to that level. Because each level only needs to correct for the rounding/downsampling error introduced at that step, this stays cheap.</p>
-  </section>
+  <pre class="code"><code>%load_ext autoreload
+%autoreload 2</code></pre>
+<pre class="code"><code># Core numerical work
+import numpy as np
 
-  <section>
-    <h2>Part 1: Single-scale alignment on the low-resolution JPEGs</h2>
-    <p class="subject">cathedral.jpg, monastery.jpg, tobolsk.jpg</p>
-    <p class="explanation">Before building the pyramid, we validate our exhaustive-search strategy on its own using <code>single_scale_align</code> directly on the three small JPEGs. We search every integer displacement <code>(dy, dx)</code> in <code>[-15, 15]</code> (961 candidates) and score each with both loss functions.</p>
-    <div class="photo-trio">
-      <figure>
-        <img src="images/cs180-proj1/cathedral-single-scale.jpg" alt="Aligned cathedral photo">
-        <figcaption><span class="name">cathedral</span>G=(5, 2)  R=(12, 3)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/monastery-single-scale.jpg" alt="Aligned monastery photo">
-        <figcaption><span class="name">monastery</span>G=(-3, 2)  R=(3, 2)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/tobolsk-single-scale.jpg" alt="Aligned tobolsk photo">
-        <figcaption><span class="name">tobolsk</span>G=(3, 3)  R=(6, 3)</figcaption>
-      </figure>
-    </div>
-  </section>
+# Reading and saving images
+import skimage.io as skio
 
-  <section>
-    <h2>Part 2: Multi-scale pyramid alignment</h2>
-    <p class="explanation">Now we try <code>pyramid_align</code> on the full-resolution images. Offsets below are <code>(dy, dx)</code>, green and red relative to blue — shown here using gradient magnitude + L2, the final method explained below.</p>
+# Converting image data types (uint8/uint16 &lt;-&gt; float)
+from skimage.util import img_as_float, img_as_ubyte
 
-    <div class="gallery">
-      <figure>
-        <img src="images/cs180-proj1/cathedral.jpg" alt="Aligned cathedral photo">
-        <figcaption><span class="name">cathedral</span>G=(5, 2)  R=(12, 3)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/monastery.jpg" alt="Aligned monastery photo">
-        <figcaption><span class="name">monastery</span>G=(-3, 2)  R=(3, 2)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/tobolsk.jpg" alt="Aligned tobolsk photo">
-        <figcaption><span class="name">tobolsk</span>G=(3, 2)  R=(6, 3)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/church.jpg" alt="Aligned church photo">
-        <figcaption><span class="name">church</span>G=(25, 4)  R=(58, -4)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/emir.jpg" alt="Aligned emir photo">
-        <figcaption><span class="name">emir</span>G=(49, 24)  R=(107, 40)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/harvesters.jpg" alt="Aligned harvesters photo">
-        <figcaption><span class="name">harvesters</span>G=(60, 17)  R=(124, 14)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/icon.jpg" alt="Aligned icon photo">
-        <figcaption><span class="name">icon</span>G=(42, 17)  R=(90, 23)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/ilemselga.jpg" alt="Aligned ilemselga photo">
-        <figcaption><span class="name">ilemselga</span>G=(40, 7)  R=(131, 11)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/melons.jpg" alt="Aligned melons photo">
-        <figcaption><span class="name">melons</span>G=(80, 10)  R=(177, 13)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/religous_painting.jpg" alt="Aligned religious painting photo">
-        <figcaption><span class="name">religous_painting</span>G=(30, 6)  R=(70, 6)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/self_portrait.jpg" alt="Aligned self portrait photo">
-        <figcaption><span class="name">self_portrait</span>G=(78, 29)  R=(175, 37)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/siren.jpg" alt="Aligned siren photo">
-        <figcaption><span class="name">siren</span>G=(49, -6)  R=(96, -24)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/three_generations.jpg" alt="Aligned three generations photo">
-        <figcaption><span class="name">three_generations</span>G=(54, 12)  R=(111, 9)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/wharf.jpg" alt="Aligned wharf photo">
-        <figcaption><span class="name">wharf</span>G=(15, -7)  R=(83, -16)</figcaption>
-      </figure>
-    </div>
+# Resizing images — for building your pyramid
+import skimage.transform as sktr
 
-    <p class="explanation">Interstingly, we see that L2 does well for all files except <strong>church.tif</strong>, whereas NCC performs well for everything besides <strong>emir.tif</strong>. Why is this?</p>
-    <p class="explanation"><strong>church.tif</strong> is dominated by large flat regions of similar brightness (sky/water). L2 is pulled towards whatever shift that minimizes this disagreement, which isn't necessarily what lines up the church and shoreline best. NCC subtracts the mean and normalizes, so it's invariant to the brightness gap between channels.</p>
-    <p class="explanation">As for <strong>emir.tif</strong>, the emir's robes is a busy, fine pattern that when downsampled aliases into high-frequency noise. Since NCC is a pattern-correlation measure, it's vulnerable to false correlation peaks. L2 survives because the robe is much darker/higher-contrast in R than in B, and in G than in B, so raw-intensity matching has a well-defined true minimum.</p>
-  </section>
+# Displaying images inline in the notebook
+import matplotlib.pyplot as plt
 
-  <section>
-    <h2>Gradient-based alignment</h2>
-    <p class="explanation">Let's try our best to make one method work everywhere. One way we can do so is to align on edges instead of raw pixels. We define <code>gradient_magnitude</code> and use that to create <code>gradient_pyramid_align</code>. <code>gradient_magnitude</code> creates an edge map — a new image that's bright wherever the original is changing fast (edges, outlines, textures) and dark wherever it's flat.</p>
+# (Optional) PIL/Pillow — only if you prefer it for I/O.
+# from PIL import Image
 
-    <div class="photo-single" style="display: flex; justify-content: center;">
-      <figure style="max-width: 420px;">
-        <img src="images/cs180-proj1/church-gradient-magnitude.jpg" alt="Gradient magnitude edge map of church.tif">
-        <figcaption>church.tif, gradient magnitude</figcaption>
-      </figure>
-    </div>
+from pathlib import Path</code></pre>
+<div class="md-cell"><h2>Warm-up: one image, naive stack</h2>
+<p>Before building anything, let's load a single plate and see what happens if we just stack the channels with no alignment at all.</p></div>
+<div class="md-cell"><p>We first import an image. Since .tif files load as uint16 (0-65535) and .jpg files load as uint8 (0-255), we normalize using <strong>img_as_float</strong> so our pipeline works for both file types.</p></div>
+<pre class="code"><code>im = img_as_float(plt.imread(&#x27;data/imgs/melons.tif&#x27;))</code></pre>
+<div class="md-cell"><p>We vertically partition each file into three to obtain the color plates. For indexing purposes it's important that height is an integer.</p></div>
+<pre class="code"><code>height = np.floor(im.shape[0] / 3.0).astype(int)
+b = im[:height]
+g = im[height: 2*height]
+r = im[2*height: 3*height]</code></pre>
+<div class="md-cell"><p>Let's have a look at the plates. </p></div>
+<pre class="code"><code>plt.imshow(b, cmap=&#x27;gray&#x27;)</code></pre>
+<pre class="output">&lt;matplotlib.image.AxesImage at 0x1153f0610&gt;</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_001.png" alt="notebook output 1">
+<pre class="code"><code>plt.imshow(g, cmap=&#x27;gray&#x27;)</code></pre>
+<pre class="output">&lt;matplotlib.image.AxesImage at 0x106d0f5d0&gt;</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_002.png" alt="notebook output 2">
+<pre class="code"><code>plt.imshow(b, cmap=&#x27;gray&#x27;)</code></pre>
+<pre class="output">&lt;matplotlib.image.AxesImage at 0x117bd0f10&gt;</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_003.png" alt="notebook output 3">
+<div class="md-cell"><p>We naively stack the plates, showing what misalignment looks like</p></div>
+<pre class="code"><code>combined = np.dstack([r, g, b])
+plt.imshow(combined)</code></pre>
+<pre class="output">&lt;matplotlib.image.AxesImage at 0x117c28f50&gt;</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_004.png" alt="notebook output 4">
+<div class="md-cell"><h2>How align.py works</h2></div>
+<div class="md-cell"><p>For the sake of modularity, we'll implement the functions in <code>align.py</code>. With L2, the lower the score, the greater the alignment between two images. With NCC it's the reverse: the greater the score, the greater the alignment between two images. To make it easy for our align function to use switch between loss functions, we define <code>neg_ncc</code>, which just returns the negative of what <code>ncc</code> would. </p></div>
+<pre class="code"><code>from align import pyramid_align, crop, l2, ncc, neg_ncc</code></pre>
+<div class="md-cell"><h3>How the alignment functions work: <code>crop</code>, <code>single_scale_align</code>, <code>pyramid_align</code></h3>
+<p><strong><code>crop(img, frac=0.1)</code></strong> trims a fixed fraction off each edge before an image is scored against another. The glass-plate scans have a black border/frame around the actual photo, and that border isn't identical between the R, G, and B plates. If we scored the <em>uncropped</em> plates, the loss function would end up rewarding whatever shift best lines up border artifacts rather than the actual scene.</p>
+<p><strong><code>single_scale_align(moving, fixed, window, loss)</code></strong> does brute-force exhaustive search. For every integer displacement <code>(dy, dx)</code> with <code>dy, dx</code> in <code>[-window, window]</code>, it shifts <code>moving</code> with <code>np.roll</code> (which wraps pixels around the border) and scores the shifted image against <code>fixed</code> with the chosen <code>loss</code> function, keeping whichever <code>(dy, dx)</code> scores best. </p>
+<p><strong><code>pyramid_align(moving, fixed, ...)</code></strong> is what we need for full-resolution TIFFs. Since exhaustively searching a window wide enough to cover those images' true offsets at full resolution would be too slow, <code>pyramid_align</code> recursively downsamples images by half (<code>sktr.rescale(..., 0.5, anti_aliasing=True)</code>) until the smaller dimension drops below <code>min_size=200</code>. It then does one exhaustive <code>single_scale_align</code> search with a wide window (<code>big=15</code>) at that tiny base resolution, before unwinding one pyramid level at a time: at each level it doubles the offset estimate inherited from the coarser level (since one pixel at half-resolution corresponds to two pixels at full resolution) and refines it with a <em>small</em> exhaustive search (<code>small=3</code>) local to that level. Because each level only needs to correct for the rounding/downsampling error introduced at that step, this stays cheap.</p></div>
+<div class="md-cell"><h2>Part 1: Single-scale alignment on the low-resolution JPEGs</h2>
+<p>Before building the pyramid, we validate our exhaustive-search strategy on its own using <code>single_scale_align</code> directly on the three small JPEGs (<code>cathedral.jpg</code>, <code>monastery.jpg</code>, <code>tobolsk.jpg</code>). We search every integer displacement <code>(dy, dx)</code> in <code>[-15, 15]</code> (961 candidates) and score each with both loss functions.</p></div>
+<pre class="code"><code>from align import single_scale_align
 
-    <h3>Does aligning on edges fix both failure cases?</h3>
-    <p class="explanation">Turns out yes. <code>church.tif</code> under L2 now matches NCC exactly — <code>(58, -4)</code> either way, instead of L2's old <code>(64, 267)</code>. As for <code>emir.tif</code>, L2 and NCC now agree with each other too, both landing on <code>(107, 40)</code>, instead of the old split (<code>(103, 57)</code> vs <code>(416, -455)</code>).</p>
+def load_plates(img_path):
+    img = img_as_float(skio.imread(img_path))
+    height = np.floor(img.shape[0] / 3.0).astype(int)
+    b = img[:height]
+    g = img[height: 2*height]
+    r = img[2*height: 3*height]
+    return r, g, b
 
-    <div class="photo-pair">
-      <figure>
-        <img src="images/cs180-proj1/church-raw-l2-fail.jpg" alt="church.tif misaligned under raw pixel L2">
-        <figcaption><span class="name">church — raw pixels + L2</span>fails: R=(64, 267)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/church.jpg" alt="church.tif correctly aligned using gradients">
-        <figcaption><span class="name">church — gradients + L2</span>fixed: R=(58, -4)</figcaption>
-      </figure>
-    </div>
-    <div class="photo-pair" style="margin-top: 20px;">
-      <figure>
-        <img src="images/cs180-proj1/emir-raw-ncc-fail.jpg" alt="emir.tif misaligned under raw pixel NCC">
-        <figcaption><span class="name">emir — raw pixels + NCC</span>fails: R=(416, -455)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/emir.jpg" alt="emir.tif correctly aligned using gradients">
-        <figcaption><span class="name">emir — gradients + L2</span>fixed: R=(107, 40)</figcaption>
-      </figure>
-    </div>
+jpg_paths = [Path(&#x27;data/imgs/cathedral.jpg&#x27;), Path(&#x27;data/imgs/monastery.jpg&#x27;), Path(&#x27;data/imgs/tobolsk.jpg&#x27;)]
+window = 15
 
-    <h3>Picking a loss function for the final export</h3>
-    <p class="explanation">We ran <code>gradient_pyramid_align</code> with both <code>l2</code> and <code>neg_ncc</code> on all 14 provided images and compared the offsets and runtime (informally). Every image landed on the exact same offset under both losses. But there's a difference in speed: L2 was consistently about 2x faster on the big TIFFs (since NCC also has to ravel, mean-subtract, and normalize at every candidate shift). Since they tie on quality, we go with gradient magnitude + L2 for the final export.</p>
-  </section>
+single_scale_results = {}
+for img_path in jpg_paths:
+    pr, pg, pb = load_plates(img_path)
+    single_scale_results[img_path.stem] = {}
+    fig, ax = plt.subplots(1, 2, figsize=(8, 6))
+    for i, (lname, loss) in enumerate([(&#x27;l2&#x27;, l2), (&#x27;neg_ncc&#x27;, neg_ncc)]):
+        g_off = single_scale_align(pg, pb, window, loss)
+        r_off = single_scale_align(pr, pb, window, loss)
+        color = np.dstack([np.roll(pr, r_off, axis=(0,1)), np.roll(pg, g_off, axis=(0,1)), pb])
+        single_scale_results[img_path.stem][lname] = (color, g_off, r_off)
+        print(f&#x27;{img_path.stem} [{lname}]:  G={g_off}  R={r_off}&#x27;)
 
-  <section>
-    <h2>Part 3: Results on self-selected images</h2>
-    <p class="explanation">We also grabbed 3 glass-negative triple-frame scans from the Library of Congress's <a href="https://www.loc.gov/pictures/collection/prok/">Prokudin-Gorskii collection</a> ourselves:</p>
-    <div class="photo-trio">
-      <figure>
-        <img src="images/cs180-proj1/sim_station_view.jpg" alt="View from the rear platform at Sim station">
-        <figcaption><span class="name">sim_station_view</span>view from the rear platform at Sim station, Samara-Zlatoust railway<br>G=(66, 9)  R=(140, 6)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/cherdyn_sculpture.jpg" alt="Carved wooden Christ figure in the Dormition Church, Cherdyn">
-        <figcaption><span class="name">cherdyn_sculpture</span>a carved wooden Christ figure in the Dormition Church, Cherdyn<br>G=(69, 25)  R=(143, 37)</figcaption>
-      </figure>
-      <figure>
-        <img src="images/cs180-proj1/mosque.jpg" alt="Front view of a crumbling mosque">
-        <figcaption><span class="name">mosque</span>front view of a crumbling mosque, with a man standing beside it<br>G=(27, 9)  R=(70, 11)</figcaption>
-      </figure>
-    </div>
-  </section>
+        ax[i].imshow(color)
+        ax[i].set_title(f&#x27;{img_path.stem} ({lname})&#x27;)
+        ax[i].axis(&#x27;off&#x27;)
+    plt.tight_layout()
+    plt.show()</code></pre>
+<pre class="output">cathedral [l2]:  G=(5, 2)  R=(12, 3)
+</pre>
+<pre class="output">cathedral [neg_ncc]:  G=(5, 2)  R=(12, 3)
+</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_005.png" alt="notebook output 5">
+<pre class="output">monastery [l2]:  G=(-3, 2)  R=(3, 2)
+</pre>
+<pre class="output">monastery [neg_ncc]:  G=(-3, 2)  R=(3, 2)
+</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_006.png" alt="notebook output 6">
+<pre class="output">tobolsk [l2]:  G=(3, 3)  R=(6, 3)
+</pre>
+<pre class="output">tobolsk [neg_ncc]:  G=(3, 3)  R=(6, 3)
+</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_007.png" alt="notebook output 7">
+<div class="md-cell"><h2>Part 2: Multi-scale pyramid alignment</h2>
+<p>Now we try<code>pyramid_align</code> on the full-resolution images. Let's see one example first before we try the whole set.</p></div>
+<div class="md-cell"><p>We first try using L2 as the loss function.</p></div>
+<pre class="code"><code>g_off = pyramid_align(g, b, loss=l2)
+r_off = pyramid_align(r, b, loss=l2)
+print(&#x27;G:&#x27;, g_off, &#x27;R:&#x27;, r_off)</code></pre>
+<pre class="output">G: (82, 11) R: (178, 13)
+</pre>
+<div class="md-cell"><p>Our align function gives us the "ideal" offset for each plate relative to the blue plate. We pass these offets into np.roll to shift each plate. We then stack the plates on top of each other and display the image.</p></div>
+<pre class="code"><code>color = np.dstack([np.roll(r, r_off, axis=(0,1)), np.roll(g, g_off, axis=(0,1)), b])
+plt.imshow(color)</code></pre>
+<pre class="output">&lt;matplotlib.image.AxesImage at 0x122da9350&gt;</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_008.png" alt="notebook output 8">
+<div class="md-cell"><p>We bundle the various steps into a function to make it easier to see how we do on all the images.</p></div>
+<pre class="code"><code>def align(img_path, align_func, loss):
+    img = img_as_float(skio.imread(img_path))
+    height = np.floor(img.shape[0] / 3.0).astype(int)
+    b = img[:height]
+    g = img[height: 2*height]
+    r = img[2*height: 3*height]
 
-  <section>
-    <h2>Note on AI Usage</h2>
-    <p class="explanation">Algorithms were written manually. Explanatory notes were drafted manually. I used Claude for help with debugging, structuring the notebook, polishing the writing, creating a webpage from the notebook, documenting <code>align.py</code>, and writing minor helper functions.</p>
-  </section>
+    g_off = align_func(g, b, loss)
+    r_off = align_func(r, b, loss)
+
+    color = np.dstack([np.roll(r, r_off, axis=(0,1)), np.roll(g, g_off, axis=(0,1)), b])
+    return color, g_off, r_off</code></pre>
+<pre class="code"><code>def show_grid(paths, align_func, loss, ncols=2):
+    paths = list(paths)
+    nrows = -(-len(paths) // ncols)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 5*nrows))
+    axes = np.atleast_1d(axes).flatten()
+
+    for ax, img_path in zip(axes, paths):
+        name = img_path.stem
+        color, g_off, r_off = align(img_path, align_func, loss)
+        print(f&#x27;{name}:  G={g_off}  R={r_off}&#x27;)
+        ax.imshow(color)
+        ax.set_title(name)
+        ax.axis(&#x27;off&#x27;)
+
+    for ax in axes[len(paths):]:
+        ax.axis(&#x27;off&#x27;)
+
+    plt.tight_layout()
+    plt.show()</code></pre>
+<pre class="code"><code>data_dir = Path(&#x27;data/imgs&#x27;)
+show_grid(sorted(data_dir.glob(&#x27;*.jpg&#x27;)) + sorted(data_dir.glob(&#x27;*.tif&#x27;)), pyramid_align, l2)</code></pre>
+<pre class="output">cathedral:  G=(5, 2)  R=(12, 3)
+monastery:  G=(-3, 2)  R=(3, 2)
+tobolsk:  G=(3, 3)  R=(6, 3)
+</pre>
+<pre class="output">church:  G=(25, 4)  R=(64, 267)
+</pre>
+<pre class="output">emir:  G=(49, 24)  R=(103, 57)
+</pre>
+<pre class="output">harvesters:  G=(59, 16)  R=(124, 13)
+</pre>
+<pre class="output">icon:  G=(41, 17)  R=(90, 23)
+</pre>
+<pre class="output">ilemselga:  G=(39, 7)  R=(130, 11)
+</pre>
+<pre class="output">melons:  G=(82, 11)  R=(178, 13)
+</pre>
+<pre class="output">religous_painting:  G=(28, 3)  R=(68, 7)
+</pre>
+<pre class="output">self_portrait:  G=(79, 29)  R=(176, 37)
+</pre>
+<pre class="output">siren:  G=(49, -6)  R=(96, -25)
+</pre>
+<pre class="output">three_generations:  G=(53, 14)  R=(112, 11)
+</pre>
+<pre class="output">wharf:  G=(15, -7)  R=(83, -16)
+</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_009.png" alt="notebook output 9">
+<div class="md-cell"><p>Now we try using ncc as the loss (well, neg_ncc).</p></div>
+<pre class="code"><code>show_grid(sorted(data_dir.glob(&#x27;*.jpg&#x27;)) + sorted(data_dir.glob(&#x27;*.tif&#x27;)), pyramid_align, neg_ncc)</code></pre>
+<pre class="output">cathedral:  G=(5, 2)  R=(12, 3)
+monastery:  G=(-3, 2)  R=(3, 2)
+</pre>
+<pre class="output">tobolsk:  G=(3, 3)  R=(6, 3)
+</pre>
+<pre class="output">church:  G=(25, 4)  R=(58, -4)
+</pre>
+<pre class="output">emir:  G=(49, 24)  R=(416, -455)
+</pre>
+<pre class="output">harvesters:  G=(60, 17)  R=(124, 13)
+</pre>
+<pre class="output">icon:  G=(41, 17)  R=(89, 23)
+</pre>
+<pre class="output">ilemselga:  G=(40, 7)  R=(130, 11)
+</pre>
+<pre class="output">melons:  G=(82, 11)  R=(178, 13)
+</pre>
+<pre class="output">religous_painting:  G=(28, 3)  R=(68, 7)
+</pre>
+<pre class="output">self_portrait:  G=(79, 29)  R=(176, 37)
+</pre>
+<pre class="output">siren:  G=(49, -6)  R=(96, -25)
+</pre>
+<pre class="output">three_generations:  G=(53, 14)  R=(112, 11)
+</pre>
+<pre class="output">wharf:  G=(15, -7)  R=(83, -16)
+</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_010.png" alt="notebook output 10">
+<div class="md-cell"><p>Interstingly, we see that L2 does well for all files except <strong>church.tif</strong>, whereas NCC performs well for everything besides <strong>emir.tif.</strong> Why is this?</p>
+<p><strong>church.tif</strong> is dominated by large flat regions of similar brightness (sky/water). L2 is pulled towards whatever shift that minimizes this disagreement, which isn't necessarily what lines up the church and shoreline best. NCC subtracts the mean and normalizes, so it's invariant to the brightness gap between channels.</p>
+<p>As for <strong>emir.tif.</strong>, the emir's robes is a busy, fine pattern that when downsampled aliases into high-frequency noise. Since NCC is a pattern-correlation measure, it's vulnerable to false correlation peaks. L2 survives because the robe is much darker/higher-contrast in R than in B, and in G than in B, so raw-intensity matching has a well-defined true minimum.</p></div>
+<div class="md-cell"><h3>Bells &amp; Whistles: Gradient-based alignment</h3></div>
+<div class="md-cell"><p>Let's try our best to make one method work everywhere. One way we can do so is to align on edges instead of raw pixels. We define <code>gradient_magnitude</code> and use that to create <code>gradient_pyramid_align</code>. <code>gradient_magnitude</code> creates an edge map — a new image that's bright wherever the original is changing fast (edges, outlines, textures) and dark wherever it's flat.</p></div>
+<pre class="code"><code>from align import gradient_magnitude, gradient_pyramid_align</code></pre>
+<pre class="code"><code>church_img = img_as_float(skio.imread(&#x27;data/imgs/church.tif&#x27;))
+grad = gradient_magnitude(church_img)
+plt.figure(figsize=(8, 20))
+plt.imshow(grad, cmap=&#x27;gray&#x27;)</code></pre>
+<pre class="output">&lt;matplotlib.image.AxesImage at 0x12300e7d0&gt;</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_011.png" alt="notebook output 11">
+<div class="md-cell"><p>Let's see how our new functions do, using each of the two loss functions. First the results for L2, then NCC.</p></div>
+<pre class="code"><code>show_grid(sorted(data_dir.glob(&#x27;*.jpg&#x27;)) + sorted(data_dir.glob(&#x27;*.tif&#x27;)), gradient_pyramid_align, l2)</code></pre>
+<pre class="output">cathedral:  G=(5, 2)  R=(12, 3)
+monastery:  G=(-3, 2)  R=(3, 2)
+tobolsk:  G=(3, 2)  R=(6, 3)
+</pre>
+<pre class="output">church:  G=(25, 4)  R=(58, -4)
+</pre>
+<pre class="output">emir:  G=(49, 24)  R=(107, 40)
+</pre>
+<pre class="output">harvesters:  G=(60, 17)  R=(124, 14)
+</pre>
+<pre class="output">icon:  G=(42, 17)  R=(90, 23)
+</pre>
+<pre class="output">ilemselga:  G=(40, 7)  R=(131, 11)
+</pre>
+<pre class="output">melons:  G=(80, 10)  R=(177, 13)
+</pre>
+<pre class="output">religous_painting:  G=(30, 6)  R=(70, 6)
+</pre>
+<pre class="output">self_portrait:  G=(78, 29)  R=(175, 37)
+</pre>
+<pre class="output">siren:  G=(49, -6)  R=(96, -24)
+</pre>
+<pre class="output">three_generations:  G=(54, 12)  R=(111, 9)
+</pre>
+<pre class="output">wharf:  G=(15, -7)  R=(83, -16)
+</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_012.png" alt="notebook output 12">
+<pre class="code"><code>show_grid(sorted(data_dir.glob(&#x27;*.jpg&#x27;)) + sorted(data_dir.glob(&#x27;*.tif&#x27;)), gradient_pyramid_align, neg_ncc)</code></pre>
+<pre class="output">cathedral:  G=(5, 2)  R=(12, 3)
+monastery:  G=(-3, 2)  R=(3, 2)
+</pre>
+<pre class="output">tobolsk:  G=(3, 2)  R=(6, 3)
+</pre>
+<pre class="output">church:  G=(25, 4)  R=(58, -4)
+</pre>
+<pre class="output">emir:  G=(49, 24)  R=(107, 40)
+</pre>
+<pre class="output">harvesters:  G=(60, 17)  R=(124, 14)
+</pre>
+<pre class="output">icon:  G=(42, 17)  R=(90, 23)
+</pre>
+<pre class="output">ilemselga:  G=(40, 7)  R=(131, 11)
+</pre>
+<pre class="output">melons:  G=(80, 10)  R=(177, 13)
+</pre>
+<pre class="output">religous_painting:  G=(30, 6)  R=(70, 6)
+</pre>
+<pre class="output">self_portrait:  G=(78, 29)  R=(175, 37)
+</pre>
+<pre class="output">siren:  G=(49, -6)  R=(96, -24)
+</pre>
+<pre class="output">three_generations:  G=(54, 12)  R=(111, 9)
+</pre>
+<pre class="output">wharf:  G=(15, -7)  R=(83, -16)
+</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_013.png" alt="notebook output 13">
+<div class="md-cell"><h3>Does aligning on edges fix both failure cases?</h3>
+<p>Turns out yes. <code>church.tif</code> under L2 now matches NCC exactly — <code>(58, -4)</code> either way, instead of L2's old <code>(64, 267)</code>. As for, <code>emir.tif</code>  L2 and NCC now agree with each other too, both landing on <code>(107, 40)</code>, instead of the old split (<code>(103, 57)</code> vs <code>(416, -455)</code>). </p></div>
+<div class="md-cell"><h3>Picking a loss function for the final export</h3>
+<p>We ran <code>gradient_pyramid_align</code> with both <code>l2</code> and <code>neg_ncc</code> on all 14 provided images and compared the offsets and runtime (informally). Every image landed on the exact same offset under both losses. But there's a difference in speed: L2 was consistently about 2x faster on the big TIFFs (since NCC also has to ravel, mean-subtract, and normalize at every candidate shift). Since they tie on quality, we go with gradient magnitude + L2 for the final export.</p></div>
+<div class="md-cell"><h2>Part 3: Results on self-selected images</h2>
+<p>We also grabbed 3 glass-negative triple-frame scans from the Library of Congress's <a href="https://www.loc.gov/pictures/collection/prok/">Prokudin-Gorskii collection</a> ourselves:</p>
+<ul>
+<li><code>sim_station_view.tif</code> — view from the rear platform at Sim station, Samara-Zlatoust railway</li>
+<li><code>cherdyn_sculpture.tif</code> — a carved wooden Christ figure in the Dormition Church, Cherdyn</li>
+<li><code>mosque.tif</code> — front view of a crumbling mosque, with a man standing beside it</li>
+</ul>
+<p>Same pipeline as above: gradient magnitude + L2, coarse-to-fine pyramid.</p></div>
+<pre class="code"><code>self_selected_dir = Path(&#x27;data/imgs/self_selected&#x27;)
+
+for img_path in sorted(self_selected_dir.glob(&#x27;*.tif&#x27;)):
+    name = img_path.stem
+    color, g_off, r_off = align(img_path, gradient_pyramid_align, l2)
+    print(f&#x27;{name}:  G={g_off}  R={r_off}&#x27;)
+    plt.figure(figsize=(5,5))
+    plt.imshow(color)
+    plt.title(name)
+    plt.axis(&#x27;off&#x27;)
+    plt.show()</code></pre>
+<pre class="output">cherdyn_sculpture:  G=(69, 25)  R=(143, 37)
+</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_014.png" alt="notebook output 14">
+<pre class="output">mosque:  G=(27, 9)  R=(70, 11)
+</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_015.png" alt="notebook output 15">
+<pre class="output">sim_station_view:  G=(66, 9)  R=(140, 6)
+</pre>
+<img class="nb-img" src="images/cs180-proj1/notebook/cell_016.png" alt="notebook output 16">
+<div class="md-cell"><h2>Export</h2>
+<p>The spec wants outputs saved as JPG. We save each result to <code>output/&lt;name&gt;.jpg</code>, named after the source.</p></div>
+<pre class="code"><code>output_dir = Path(&#x27;output&#x27;)
+output_dir.mkdir(exist_ok=True)
+
+all_paths = sorted(data_dir.glob(&#x27;*.jpg&#x27;)) + sorted(data_dir.glob(&#x27;*.tif&#x27;)) + sorted(self_selected_dir.glob(&#x27;*.tif&#x27;))
+for img_path in all_paths:
+    name = img_path.stem
+    out_path = output_dir / f&#x27;{name}.jpg&#x27;
+
+    if out_path.exists():
+        print(f&#x27;{name}: {out_path} already exists, skipping&#x27;)
+        continue
+
+    color, g_off, r_off = align(img_path, gradient_pyramid_align, l2)
+    print(f&#x27;{name}:  G={g_off}  R={r_off}  -&gt;  {out_path}&#x27;)
+    skio.imsave(out_path, img_as_ubyte(np.clip(color, 0, 1)))</code></pre>
+<pre class="output">cathedral: output/cathedral.jpg already exists, skipping
+monastery: output/monastery.jpg already exists, skipping
+tobolsk: output/tobolsk.jpg already exists, skipping
+church: output/church.jpg already exists, skipping
+emir: output/emir.jpg already exists, skipping
+harvesters: output/harvesters.jpg already exists, skipping
+icon: output/icon.jpg already exists, skipping
+ilemselga: output/ilemselga.jpg already exists, skipping
+melons: output/melons.jpg already exists, skipping
+religous_painting: output/religous_painting.jpg already exists, skipping
+self_portrait: output/self_portrait.jpg already exists, skipping
+siren: output/siren.jpg already exists, skipping
+three_generations: output/three_generations.jpg already exists, skipping
+wharf: output/wharf.jpg already exists, skipping
+cherdyn_sculpture: output/cherdyn_sculpture.jpg already exists, skipping
+mosque: output/mosque.jpg already exists, skipping
+sim_station_view: output/sim_station_view.jpg already exists, skipping
+</pre>
+<div class="md-cell"><h2>Note on AI Usage</h2>
+<p>Algorithms were written manually. Explanatory notes were drafted manually. I used Claude for help with debugging, structuring the notebook, polishing the writing, creating a webpage from the notebook, documenting <code>align.py</code>, and writing minor helper functions.</p></div>
 </main>
 
 </body>
