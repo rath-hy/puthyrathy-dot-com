@@ -183,14 +183,17 @@
   </header>
 
   <section>
-    <h2>Overview</h2>
-    <p class="explanation">Sergei Prokudin-Gorskii photographed the Russian Empire in the early 1900s using a camera that captured three exposures of the same scene through blue, green, and red filters, stacked into one glass-plate negative. To get a color photo back, you split the negative into its three channels and stack them — except the plates don't line up perfectly, since the exposures happened seconds apart on a hand-loaded camera. This project finds the right pixel offset to align the green and red channels to the blue one, first by brute-force search on small JPEGs, then with a coarse-to-fine image pyramid for the full-resolution scans.</p>
+    <h2>How align.py works</h2>
+    <p class="explanation">For the sake of modularity, we'll implement the functions in <code>align.py</code>. With L2, the lower the score, the greater the alignment between two images. With NCC it's the reverse: the greater the score, the greater the alignment between two images. To make it easy for our align function to use switch between loss functions, we define <code>neg_ncc</code>, which just returns the negative of what <code>ncc</code> would.</p>
+    <p class="explanation"><strong><code>crop(img, frac=0.1)</code></strong> trims a fixed fraction off each edge before an image is scored against another. The glass-plate scans have a black border/frame around the actual photo, and that border isn't identical between the R, G, and B plates. If we scored the <em>uncropped</em> plates, the loss function would end up rewarding whatever shift best lines up border artifacts rather than the actual scene.</p>
+    <p class="explanation"><strong><code>single_scale_align(moving, fixed, window, loss)</code></strong> does brute-force exhaustive search. For every integer displacement <code>(dy, dx)</code> with <code>dy, dx</code> in <code>[-window, window]</code>, it shifts <code>moving</code> with <code>np.roll</code> (which wraps pixels around the border) and scores the shifted image against <code>fixed</code> with the chosen <code>loss</code> function, keeping whichever <code>(dy, dx)</code> scores best.</p>
+    <p class="explanation"><strong><code>pyramid_align(moving, fixed, ...)</code></strong> is what we need for full-resolution TIFFs. Since exhaustively searching a window wide enough to cover those images' true offsets at full resolution would be too slow, <code>pyramid_align</code> recursively downsamples images by half (<code>sktr.rescale(..., 0.5, anti_aliasing=True)</code>) until the smaller dimension drops below <code>min_size=200</code>. It then does one exhaustive <code>single_scale_align</code> search with a wide window (<code>big=15</code>) at that tiny base resolution, before unwinding one pyramid level at a time: at each level it doubles the offset estimate inherited from the coarser level (since one pixel at half-resolution corresponds to two pixels at full resolution) and refines it with a <em>small</em> exhaustive search (<code>small=3</code>) local to that level. Because each level only needs to correct for the rounding/downsampling error introduced at that step, this stays cheap.</p>
   </section>
 
   <section>
-    <h2>Part 1: Single-scale alignment</h2>
+    <h2>Part 1: Single-scale alignment on the low-resolution JPEGs</h2>
     <p class="subject">cathedral.jpg, monastery.jpg, tobolsk.jpg</p>
-    <p class="explanation">Before building the pyramid, we validate the exhaustive-search strategy on its own: for every integer displacement <code>(dy, dx)</code> in <code>[-15, 15]</code>, shift the channel and score it against the blue channel with L2 distance, keep the best-scoring shift. These three JPEGs are small enough (~340-400px tall per channel) that this is fast and doesn't need a pyramid.</p>
+    <p class="explanation">Before building the pyramid, we validate our exhaustive-search strategy on its own using <code>single_scale_align</code> directly on the three small JPEGs. We search every integer displacement <code>(dy, dx)</code> in <code>[-15, 15]</code> (961 candidates) and score each with both loss functions.</p>
     <div class="photo-trio">
       <figure>
         <img src="images/cs180-proj1/cathedral-single-scale.jpg" alt="Aligned cathedral photo">
@@ -209,7 +212,7 @@
 
   <section>
     <h2>Part 2: Multi-scale pyramid alignment</h2>
-    <p class="explanation">The provided TIFFs are up to ~9600×3600px per plate — searching a window wide enough to cover their true offsets at full resolution would be far too slow. <code>pyramid_align</code> downsamples both channels by half repeatedly until they're under 200px on the short side, does one exhaustive search there, then climbs back up doubling the offset and refining it with a small local search at each level. Final method used below: gradient magnitude (edge strength) instead of raw pixels, scored with L2 — offsets are <code>(dy, dx)</code>, green and red relative to blue.</p>
+    <p class="explanation">Now we try <code>pyramid_align</code> on the full-resolution images. Offsets below are <code>(dy, dx)</code>, green and red relative to blue — shown here using gradient magnitude + L2, the final method explained below.</p>
 
     <div class="gallery">
       <figure>
@@ -270,9 +273,24 @@
       </figure>
     </div>
 
-    <h3>Why church and emir break the obvious approaches</h3>
-    <p class="explanation">L2 does well for all files except <strong>church.tif</strong>, whereas NCC performs well for everything besides <strong>emir.tif</strong>. <strong>church.tif</strong> is dominated by large flat regions of similar brightness (sky/water). L2 is pulled towards whatever shift minimizes this disagreement, which isn't necessarily what lines up the church and shoreline best. NCC subtracts the mean and normalizes, so it's invariant to the brightness gap between channels. As for <strong>emir.tif</strong>, the emir's robe is a busy, fine pattern that aliases into high-frequency noise when downsampled. NCC is a pattern-correlation measure, so it's vulnerable to false correlation peaks there. L2 survives because the robe is much darker/higher-contrast in R than in B, so raw-intensity matching has a well-defined true minimum.</p>
-    <p class="explanation">To make one method work everywhere, we align on edges instead of raw pixels — a gradient-magnitude map is bright wherever the image is changing fast and dark where it's flat, which sidesteps both problems: it throws out the raw brightness that confuses L2, and it isn't fooled by the alised texture that confuses NCC.</p>
+    <p class="explanation">Interstingly, we see that L2 does well for all files except <strong>church.tif</strong>, whereas NCC performs well for everything besides <strong>emir.tif</strong>. Why is this?</p>
+    <p class="explanation"><strong>church.tif</strong> is dominated by large flat regions of similar brightness (sky/water). L2 is pulled towards whatever shift that minimizes this disagreement, which isn't necessarily what lines up the church and shoreline best. NCC subtracts the mean and normalizes, so it's invariant to the brightness gap between channels.</p>
+    <p class="explanation">As for <strong>emir.tif</strong>, the emir's robes is a busy, fine pattern that when downsampled aliases into high-frequency noise. Since NCC is a pattern-correlation measure, it's vulnerable to false correlation peaks. L2 survives because the robe is much darker/higher-contrast in R than in B, and in G than in B, so raw-intensity matching has a well-defined true minimum.</p>
+  </section>
+
+  <section>
+    <h2>Gradient-based alignment</h2>
+    <p class="explanation">Let's try our best to make one method work everywhere. One way we can do so is to align on edges instead of raw pixels. We define <code>gradient_magnitude</code> and use that to create <code>gradient_pyramid_align</code>. <code>gradient_magnitude</code> creates an edge map — a new image that's bright wherever the original is changing fast (edges, outlines, textures) and dark wherever it's flat.</p>
+
+    <div class="photo-single" style="display: flex; justify-content: center;">
+      <figure style="max-width: 420px;">
+        <img src="images/cs180-proj1/church-gradient-magnitude.jpg" alt="Gradient magnitude edge map of church.tif">
+        <figcaption>church.tif, gradient magnitude</figcaption>
+      </figure>
+    </div>
+
+    <h3>Does aligning on edges fix both failure cases?</h3>
+    <p class="explanation">Turns out yes. <code>church.tif</code> under L2 now matches NCC exactly — <code>(58, -4)</code> either way, instead of L2's old <code>(64, 267)</code>. As for <code>emir.tif</code>, L2 and NCC now agree with each other too, both landing on <code>(107, 40)</code>, instead of the old split (<code>(103, 57)</code> vs <code>(416, -455)</code>).</p>
 
     <div class="photo-pair">
       <figure>
@@ -294,12 +312,14 @@
         <figcaption><span class="name">emir — gradients + L2</span>fixed: R=(107, 40)</figcaption>
       </figure>
     </div>
-    <p class="explanation">We also compared gradients+L2 against gradients+NCC across all 14 provided images: every single image landed on the exact same offset under both losses, so there's no quality tradeoff between them once you're aligning on gradients. L2 was ~1.8-2x faster, so that's the final method used throughout this page.</p>
+
+    <h3>Picking a loss function for the final export</h3>
+    <p class="explanation">We ran <code>gradient_pyramid_align</code> with both <code>l2</code> and <code>neg_ncc</code> on all 14 provided images and compared the offsets and runtime (informally). Every image landed on the exact same offset under both losses. But there's a difference in speed: L2 was consistently about 2x faster on the big TIFFs (since NCC also has to ravel, mean-subtract, and normalize at every candidate shift). Since they tie on quality, we go with gradient magnitude + L2 for the final export.</p>
   </section>
 
   <section>
-    <h2>Part 3: Self-selected images</h2>
-    <p class="explanation">Three more glass-negative triple-frame scans, downloaded directly from the Library of Congress's <a href="https://www.loc.gov/pictures/collection/prok/">Prokudin-Gorskii collection</a> — the raw negative, not the pre-made color composite or sepia print LOC also hosts for some items.</p>
+    <h2>Part 3: Results on self-selected images</h2>
+    <p class="explanation">We also grabbed 3 glass-negative triple-frame scans from the Library of Congress's <a href="https://www.loc.gov/pictures/collection/prok/">Prokudin-Gorskii collection</a> ourselves:</p>
     <div class="photo-trio">
       <figure>
         <img src="images/cs180-proj1/sim_station_view.jpg" alt="View from the rear platform at Sim station">
@@ -314,6 +334,11 @@
         <figcaption><span class="name">mosque</span>front view of a crumbling mosque, with a man standing beside it<br>G=(27, 9)  R=(70, 11)</figcaption>
       </figure>
     </div>
+  </section>
+
+  <section>
+    <h2>Note on AI Usage</h2>
+    <p class="explanation">Algorithms were written manually. Explanatory notes were drafted manually. I used Claude for help with debugging, structuring the notebook, polishing the writing, creating a webpage from the notebook, documenting <code>align.py</code>, and writing minor helper functions.</p>
   </section>
 </main>
 
