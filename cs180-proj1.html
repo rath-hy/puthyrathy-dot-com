@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS180 Project 1 — Puthyrath Hy</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: #ffffff;
+    color: #1a1a1a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 24px 100px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .project-nav {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+    font-size: 0.95rem;
+  }
+
+  .project-nav a {
+    color: #6b6b6b;
+    text-decoration: none;
+    padding-bottom: 4px;
+    border-bottom: 2px solid transparent;
+  }
+
+  .project-nav a:hover {
+    color: #1a1a1a;
+  }
+
+  .project-nav a.active {
+    color: #1a1a1a;
+    border-bottom-color: #1a1a1a;
+    font-weight: 600;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin: 0 0 8px;
+  }
+
+  .author {
+    font-size: 1.1rem;
+    color: #6b6b6b;
+    margin: 0 0 20px;
+  }
+
+  .notebook-link {
+    display: inline-block;
+    font-size: 0.95rem;
+    color: #1a1a1a;
+    text-decoration: none;
+    border: 1px solid #d5d5d5;
+    border-radius: 6px;
+    padding: 6px 14px;
+  }
+
+  .notebook-link:hover {
+    border-color: #1a1a1a;
+  }
+
+  section {
+    margin-bottom: 80px;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    margin: 0 0 4px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    margin: 40px 0 4px;
+  }
+
+  .subject {
+    font-size: 1rem;
+    font-style: italic;
+    color: #6b6b6b;
+    margin: 16px 0 24px;
+  }
+
+  .photo-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .photo-trio {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  figure img {
+    width: 100%;
+    height: auto;
+    max-height: 480px;
+    object-fit: contain;
+    display: block;
+    border-radius: 4px;
+    background: #f4f4f4;
+    margin: 0 auto;
+  }
+
+  figcaption {
+    font-size: 0.85rem;
+    color: #6b6b6b;
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  figcaption .name {
+    display: block;
+    color: #1a1a1a;
+    font-weight: 600;
+  }
+
+  .explanation {
+    margin-top: 28px;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .explanation code {
+    background: #f4f4f4;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+
+  @media (max-width: 640px) {
+    .photo-pair, .photo-trio {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<main>
+  <header>
+    <nav class="project-nav">
+      <a href="cs180.html">Project 0</a>
+      <a href="cs180-proj1.html" class="active">Project 1</a>
+    </nav>
+    <h1>CS180 Project 1: Images of the Russian Empire</h1>
+    <p class="author">Puthyrath Hy</p>
+    <a class="notebook-link" href="https://github.com/rath-hy/cs180-proj1/blob/main/main.ipynb">View the notebook →</a>
+  </header>
+
+  <section>
+    <h2>Overview</h2>
+    <p class="explanation">Sergei Prokudin-Gorskii photographed the Russian Empire in the early 1900s using a camera that captured three exposures of the same scene through blue, green, and red filters, stacked into one glass-plate negative. To get a color photo back, you split the negative into its three channels and stack them — except the plates don't line up perfectly, since the exposures happened seconds apart on a hand-loaded camera. This project finds the right pixel offset to align the green and red channels to the blue one, first by brute-force search on small JPEGs, then with a coarse-to-fine image pyramid for the full-resolution scans.</p>
+  </section>
+
+  <section>
+    <h2>Part 1: Single-scale alignment</h2>
+    <p class="subject">cathedral.jpg, monastery.jpg, tobolsk.jpg</p>
+    <p class="explanation">Before building the pyramid, we validate the exhaustive-search strategy on its own: for every integer displacement <code>(dy, dx)</code> in <code>[-15, 15]</code>, shift the channel and score it against the blue channel with L2 distance, keep the best-scoring shift. These three JPEGs are small enough (~340-400px tall per channel) that this is fast and doesn't need a pyramid.</p>
+    <div class="photo-trio">
+      <figure>
+        <img src="images/cs180-proj1/cathedral-single-scale.jpg" alt="Aligned cathedral photo">
+        <figcaption><span class="name">cathedral</span>G=(5, 2)  R=(12, 3)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/monastery-single-scale.jpg" alt="Aligned monastery photo">
+        <figcaption><span class="name">monastery</span>G=(-3, 2)  R=(3, 2)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/tobolsk-single-scale.jpg" alt="Aligned tobolsk photo">
+        <figcaption><span class="name">tobolsk</span>G=(3, 3)  R=(6, 3)</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part 2: Multi-scale pyramid alignment</h2>
+    <p class="explanation">The provided TIFFs are up to ~9600×3600px per plate — searching a window wide enough to cover their true offsets at full resolution would be far too slow. <code>pyramid_align</code> downsamples both channels by half repeatedly until they're under 200px on the short side, does one exhaustive search there, then climbs back up doubling the offset and refining it with a small local search at each level. Final method used below: gradient magnitude (edge strength) instead of raw pixels, scored with L2 — offsets are <code>(dy, dx)</code>, green and red relative to blue.</p>
+
+    <div class="gallery">
+      <figure>
+        <img src="images/cs180-proj1/cathedral.jpg" alt="Aligned cathedral photo">
+        <figcaption><span class="name">cathedral</span>G=(5, 2)  R=(12, 3)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/monastery.jpg" alt="Aligned monastery photo">
+        <figcaption><span class="name">monastery</span>G=(-3, 2)  R=(3, 2)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/tobolsk.jpg" alt="Aligned tobolsk photo">
+        <figcaption><span class="name">tobolsk</span>G=(3, 2)  R=(6, 3)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/church.jpg" alt="Aligned church photo">
+        <figcaption><span class="name">church</span>G=(25, 4)  R=(58, -4)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/emir.jpg" alt="Aligned emir photo">
+        <figcaption><span class="name">emir</span>G=(49, 24)  R=(107, 40)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/harvesters.jpg" alt="Aligned harvesters photo">
+        <figcaption><span class="name">harvesters</span>G=(60, 17)  R=(124, 14)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/icon.jpg" alt="Aligned icon photo">
+        <figcaption><span class="name">icon</span>G=(42, 17)  R=(90, 23)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/ilemselga.jpg" alt="Aligned ilemselga photo">
+        <figcaption><span class="name">ilemselga</span>G=(40, 7)  R=(131, 11)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/melons.jpg" alt="Aligned melons photo">
+        <figcaption><span class="name">melons</span>G=(80, 10)  R=(177, 13)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/religous_painting.jpg" alt="Aligned religious painting photo">
+        <figcaption><span class="name">religous_painting</span>G=(30, 6)  R=(70, 6)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/self_portrait.jpg" alt="Aligned self portrait photo">
+        <figcaption><span class="name">self_portrait</span>G=(78, 29)  R=(175, 37)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/siren.jpg" alt="Aligned siren photo">
+        <figcaption><span class="name">siren</span>G=(49, -6)  R=(96, -24)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/three_generations.jpg" alt="Aligned three generations photo">
+        <figcaption><span class="name">three_generations</span>G=(54, 12)  R=(111, 9)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/wharf.jpg" alt="Aligned wharf photo">
+        <figcaption><span class="name">wharf</span>G=(15, -7)  R=(83, -16)</figcaption>
+      </figure>
+    </div>
+
+    <h3>Why church and emir break the obvious approaches</h3>
+    <p class="explanation">L2 does well for all files except <strong>church.tif</strong>, whereas NCC performs well for everything besides <strong>emir.tif</strong>. <strong>church.tif</strong> is dominated by large flat regions of similar brightness (sky/water). L2 is pulled towards whatever shift minimizes this disagreement, which isn't necessarily what lines up the church and shoreline best. NCC subtracts the mean and normalizes, so it's invariant to the brightness gap between channels. As for <strong>emir.tif</strong>, the emir's robe is a busy, fine pattern that aliases into high-frequency noise when downsampled. NCC is a pattern-correlation measure, so it's vulnerable to false correlation peaks there. L2 survives because the robe is much darker/higher-contrast in R than in B, so raw-intensity matching has a well-defined true minimum.</p>
+    <p class="explanation">To make one method work everywhere, we align on edges instead of raw pixels — a gradient-magnitude map is bright wherever the image is changing fast and dark where it's flat, which sidesteps both problems: it throws out the raw brightness that confuses L2, and it isn't fooled by the alised texture that confuses NCC.</p>
+
+    <div class="photo-pair">
+      <figure>
+        <img src="images/cs180-proj1/church-raw-l2-fail.jpg" alt="church.tif misaligned under raw pixel L2">
+        <figcaption><span class="name">church — raw pixels + L2</span>fails: R=(64, 267)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/church.jpg" alt="church.tif correctly aligned using gradients">
+        <figcaption><span class="name">church — gradients + L2</span>fixed: R=(58, -4)</figcaption>
+      </figure>
+    </div>
+    <div class="photo-pair" style="margin-top: 20px;">
+      <figure>
+        <img src="images/cs180-proj1/emir-raw-ncc-fail.jpg" alt="emir.tif misaligned under raw pixel NCC">
+        <figcaption><span class="name">emir — raw pixels + NCC</span>fails: R=(416, -455)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/emir.jpg" alt="emir.tif correctly aligned using gradients">
+        <figcaption><span class="name">emir — gradients + L2</span>fixed: R=(107, 40)</figcaption>
+      </figure>
+    </div>
+    <p class="explanation">We also compared gradients+L2 against gradients+NCC across all 14 provided images: every single image landed on the exact same offset under both losses, so there's no quality tradeoff between them once you're aligning on gradients. L2 was ~1.8-2x faster, so that's the final method used throughout this page.</p>
+  </section>
+
+  <section>
+    <h2>Part 3: Self-selected images</h2>
+    <p class="explanation">Three more glass-negative triple-frame scans, downloaded directly from the Library of Congress's <a href="https://www.loc.gov/pictures/collection/prok/">Prokudin-Gorskii collection</a> — the raw negative, not the pre-made color composite or sepia print LOC also hosts for some items.</p>
+    <div class="photo-trio">
+      <figure>
+        <img src="images/cs180-proj1/sim_station_view.jpg" alt="View from the rear platform at Sim station">
+        <figcaption><span class="name">sim_station_view</span>view from the rear platform at Sim station, Samara-Zlatoust railway<br>G=(66, 9)  R=(140, 6)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/cherdyn_sculpture.jpg" alt="Carved wooden Christ figure in the Dormition Church, Cherdyn">
+        <figcaption><span class="name">cherdyn_sculpture</span>a carved wooden Christ figure in the Dormition Church, Cherdyn<br>G=(69, 25)  R=(143, 37)</figcaption>
+      </figure>
+      <figure>
+        <img src="images/cs180-proj1/mosque.jpg" alt="Front view of a crumbling mosque">
+        <figcaption><span class="name">mosque</span>front view of a crumbling mosque, with a man standing beside it<br>G=(27, 9)  R=(70, 11)</figcaption>
+      </figure>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

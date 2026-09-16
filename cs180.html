@@ -28,6 +28,31 @@
     margin-bottom: 72px;
   }
 
+  .project-nav {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+    font-size: 0.95rem;
+  }
+
+  .project-nav a {
+    color: #6b6b6b;
+    text-decoration: none;
+    padding-bottom: 4px;
+    border-bottom: 2px solid transparent;
+  }
+
+  .project-nav a:hover {
+    color: #1a1a1a;
+  }
+
+  .project-nav a.active {
+    color: #1a1a1a;
+    border-bottom-color: #1a1a1a;
+    font-weight: 600;
+  }
+
   h1 {
     font-size: 2rem;
     margin: 0 0 8px;
@@ -112,6 +137,10 @@
 
 <main>
   <header>
+    <nav class="project-nav">
+      <a href="cs180.html" class="active">Project 0</a>
+      <a href="cs180-proj1.html">Project 1</a>
+    </nav>
     <h1>CS180 Project 0</h1>
     <p class="author">Puthyrath Hy</p>
   </header>
