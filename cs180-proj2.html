@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS180 Project 2 — Puthyrath Hy</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: #ffffff;
+    color: #1a1a1a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 24px 100px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .project-nav {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+    font-size: 0.95rem;
+  }
+
+  .project-nav a {
+    color: #6b6b6b;
+    text-decoration: none;
+    padding-bottom: 4px;
+    border-bottom: 2px solid transparent;
+  }
+
+  .project-nav a:hover {
+    color: #1a1a1a;
+  }
+
+  .project-nav a.active {
+    color: #1a1a1a;
+    border-bottom-color: #1a1a1a;
+    font-weight: 600;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin: 0 0 8px;
+  }
+
+  .author {
+    font-size: 1.1rem;
+    color: #6b6b6b;
+    margin: 0 0 20px;
+  }
+
+  .notebook-link {
+    display: inline-block;
+    font-size: 0.95rem;
+    color: #1a1a1a;
+    text-decoration: none;
+    border: 1px solid #d5d5d5;
+    border-radius: 6px;
+    padding: 6px 14px;
+  }
+
+  .notebook-link:hover {
+    border-color: #1a1a1a;
+  }
+
+  .md-cell {
+    margin: 28px 0;
+  }
+
+  .md-cell h1, .md-cell h2, .md-cell h3 {
+    margin: 40px 0 4px;
+  }
+
+  .md-cell h2 {
+    font-size: 1.4rem;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  .md-cell h3 {
+    font-size: 1.1rem;
+  }
+
+  .md-cell p, .md-cell li {
+    color: #333;
+  }
+
+  .md-cell code {
+    background: #f4f4f4;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+
+  .md-cell a {
+    color: #1a1a1a;
+  }
+
+  pre.code {
+    background: #f6f6f6;
+    border: 1px solid #ececec;
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    margin: 16px 0;
+  }
+
+  pre.output {
+    background: #fafafa;
+    border-left: 3px solid #ddd;
+    padding: 10px 14px;
+    overflow-x: auto;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    color: #444;
+    margin: 0 0 16px;
+    white-space: pre-wrap;
+  }
+
+  img.nb-img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    background: #f4f4f4;
+    margin: 0 0 16px;
+  }
+</style>
+</head>
+<body>
+
+<main>
+  <header>
+    <nav class="project-nav">
+      <a href="cs180.html">Project 0</a>
+      <a href="cs180-proj1.html">Project 1</a>
+      <a href="cs180-proj2.html" class="active">Project 2</a>
+    </nav>
+    <h1>CS180 Project 2: Fun with Filters and Frequencies</h1>
+    <p class="author">Puthyrath Hy</p>
+    <a class="notebook-link" href="https://github.com/rath-hy/cs180-proj2/blob/main/main.ipynb">View the notebook source →</a>
+  </header>
+
+<div class="md-cell"><p>We start by making some of the necessary imports.</p></div>
+<pre class="code"><code>import numpy as np
+import matplotlib.pyplot as plt
+import cv2
+from scipy.signal import convolve2d
+from skimage import io, img_as_float, color
+
+%matplotlib inline
+plt.rcParams[&#x27;figure.figsize&#x27;] = (10, 8)</code></pre>
+<div class="md-cell"><p>We import all the starter images.</p></div>
+<pre class="code"><code>## Load starter images
+
+cameraman = img_as_float(io.imread(&#x27;cameraman.png&#x27;))
+if cameraman.ndim == 3:
+    cameraman = color.rgb2gray(cameraman[..., :3])
+
+taj = img_as_float(io.imread(&#x27;taj.jpg&#x27;))
+taj_gray = color.rgb2gray(taj)
+
+apple = img_as_float(io.imread(&#x27;spline/apple.jpeg&#x27;))
+orange = img_as_float(io.imread(&#x27;spline/orange.jpeg&#x27;))
+
+fig, axes = plt.subplots(1, 4, figsize=(16, 4))
+for ax, img, title in zip(
+    axes, [cameraman, taj, apple, orange],
+    [&#x27;cameraman&#x27;, &#x27;taj&#x27;, &#x27;apple&#x27;, &#x27;orange&#x27;]
+):
+    ax.imshow(img, cmap=&#x27;gray&#x27; if img.ndim == 2 else None)
+    ax.set_title(title)
+    ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_001.png" alt="notebook output 1">
+<div class="md-cell"><h2>Part 1: Fun with Filters</h2>
+<h3>Part 1.1: Convolutions from Scratch</h3></div>
+<div class="md-cell"><p>Our four-loop convolution manually multiplies each element of the kernel with the corresponding pixel of the image. Our two-loop implementation takes advantage of vectorized operations.</p></div>
+<pre class="code"><code>def conv2d_4loop(image, kernel, padding=&#x27;same&#x27;):
+    kernel = np.flip(kernel)
+    kh, kw = kernel.shape
+    if padding == &#x27;same&#x27;:
+        ph0, ph1 = kh // 2, (kh - 1) // 2
+        pw0, pw1 = kw // 2, (kw - 1) // 2
+    elif padding == &#x27;full&#x27;:
+        ph0 = ph1 = kh - 1
+        pw0 = pw1 = kw - 1
+    else:
+        raise ValueError(f&quot;unknown padding mode: {padding}&quot;)
+    padded = np.pad(image, ((ph0, ph1), (pw0, pw1)), mode=&#x27;constant&#x27;)
+    oh, ow = padded.shape[0] - kh + 1, padded.shape[1] - kw + 1
+    res = np.zeros((oh, ow))
+
+    for r in range(oh):
+        for c in range(ow):
+            acc = 0.0
+            for kr in range(kh):
+                for kc in range(kw):
+                    acc += padded[r+kr, c+kc] * kernel[kr][kc]
+
+            res[r][c] = acc
+
+    return res
+
+def conv2d_2loop(image, kernel, padding=&#x27;same&#x27;):
+    kernel = np.flip(kernel)
+    kh, kw = kernel.shape
+    if padding == &#x27;same&#x27;:
+        ph0, ph1 = kh // 2, (kh - 1) // 2
+        pw0, pw1 = kw // 2, (kw - 1) // 2
+    elif padding == &#x27;full&#x27;:
+        ph0 = ph1 = kh - 1
+        pw0 = pw1 = kw - 1
+    else:
+        raise ValueError(f&quot;unknown padding mode: {padding}&quot;)
+    padded = np.pad(image, ((ph0, ph1), (pw0, pw1)), mode=&#x27;constant&#x27;)
+    oh, ow = padded.shape[0] - kh + 1, padded.shape[1] - kw + 1
+    res = np.zeros((oh, ow))
+
+    for r in range(oh):
+        for c in range(ow):
+            patch = padded[r:r+kh, c:c+kw]
+            res[r, c] = np.sum(patch * kernel)
+
+    return res</code></pre>
+<pre class="code"><code>Dx = np.array([[1, -1]])
+Dy = np.array([[1], [-1]])
+
+dx_cameraman = convolve2d(cameraman, Dx, mode=&#x27;same&#x27;)
+dy_cameraman = convolve2d(cameraman, Dy, mode=&#x27;same&#x27;)
+gradient_magnitude = np.sqrt(dx_cameraman**2 + dy_cameraman**2)</code></pre>
+<div class="md-cell"><h3>Comparing results</h3></div>
+<pre class="code"><code>import time
+test = cameraman[:100, :100]        
+box = np.ones((9, 9)) / 81
+
+t = time.time(); mine4 = conv2d_4loop(test, box); print(&#x27;4-loop:&#x27;, time.time()-t)
+t = time.time(); mine2 = conv2d_2loop(test, box); print(&#x27;2-loop:&#x27;, time.time()-t)
+t = time.time(); scipy_r = convolve2d(test, box, mode=&#x27;same&#x27;, boundary=&#x27;fill&#x27;); print(&#x27;scipy:&#x27;, time.time()-t)
+
+print(&#x27;4loop vs scipy max diff:&#x27;, np.abs(mine4 - scipy_r).max())
+print(&#x27;2loop vs scipy max diff:&#x27;, np.abs(mine2 - scipy_r).max())
+
+mine4_full = conv2d_4loop(test, box, padding=&#x27;full&#x27;)
+scipy_full = convolve2d(test, box, mode=&#x27;full&#x27;, boundary=&#x27;fill&#x27;)
+print(&#x27;full-mode shapes match:&#x27;, mine4_full.shape == scipy_full.shape)
+print(&#x27;full-mode max diff:&#x27;, np.abs(mine4_full - scipy_full).max())
+
+# Dx is an even-sized (1x2) kernel -- checks that &#x27;same&#x27; padding is correctly
+# asymmetric, not just kh//2 on both sides.
+Dx_test = np.array([[1, -1]])
+mine_dx = conv2d_2loop(test, Dx_test)
+scipy_dx = convolve2d(test, Dx_test, mode=&#x27;same&#x27;, boundary=&#x27;fill&#x27;)
+print(&#x27;Dx same-mode max diff:&#x27;, np.abs(mine_dx - scipy_dx).max())</code></pre>
+<pre class="output">4-loop: 0.13105010986328125
+2-loop: 0.015548944473266602
+scipy: 0.0006721019744873047
+4loop vs scipy max diff: 1.5543122344752192e-15
+2loop vs scipy max diff: 5.551115123125783e-16
+full-mode shapes match: True
+full-mode max diff: 1.5543122344752192e-15
+Dx same-mode max diff: 0.0
+</pre>
+<div class="md-cell"><p>The 2-loop implementation is nearly 8 times faster then the 4-loop implementation, but scipy's implementation is ~23 times faster than the 2-loop implementation! Both padding modes match scipy exactly. Boundary handling is the same as scipy's <code>boundary='fill'</code>: zero-pad, so edge pixels see fabricated zeros instead of real neighbors, which slightly dims/darkens results near the border.</p></div>
+<div class="md-cell"><h3>Convolving Myself</h3></div>
+<pre class="code"><code>myself = img_as_float(io.imread(&#x27;myself.jpeg&#x27;))
+myself_gray = color.rgb2gray(myself)
+
+box_9x9 = np.ones((9, 9)) / 81.0
+Dx = np.array([[1, -1]])
+Dy = np.array([[1], [-1]])
+
+myself_box = conv2d_2loop(myself_gray, box_9x9)
+myself_dx = conv2d_2loop(myself_gray, Dx)
+myself_dy = conv2d_2loop(myself_gray, Dy)
+
+fig, axes = plt.subplots(1, 4, figsize=(16, 6))
+for ax, img, title in zip(
+    axes,
+    [myself_gray, myself_box, myself_dx, myself_dy],
+    [&#x27;original (gray)&#x27;, &#x27;9x9 box filter&#x27;, &#x27;Dx&#x27;, &#x27;Dy&#x27;]
+):
+    ax.imshow(img, cmap=&#x27;gray&#x27;)
+    ax.set_title(title)
+    ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_002.png" alt="notebook output 2">
+<div class="md-cell"><h3>Part 1.2: Finite Difference Operator</h3></div>
+<div class="md-cell"><p>Next, we convolve the cameraman image with finite difference operators <strong>D_x</strong> and <strong>D_y</strong> and show the gradient magnitude image.</p></div>
+<pre class="code"><code>dx = convolve2d(cameraman, Dx, mode=&#x27;same&#x27;, boundary=&#x27;fill&#x27;)
+dy = convolve2d(cameraman, Dy, mode=&#x27;same&#x27;, boundary=&#x27;fill&#x27;)
+grad_mag = np.sqrt(dx**2 + dy**2)
+
+fig, axes = plt.subplots(1, 3, figsize=(16, 4))
+for ax, img, title in zip(axes,
+        [dx, dy, grad_mag],
+        [&#x27;∂/∂x&#x27;, &#x27;∂/∂y&#x27;, &#x27;gradient magnitude&#x27;]):
+    ax.imshow(img, cmap=&#x27;gray&#x27;)
+    ax.set_title(title)
+    ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_003.png" alt="notebook output 3">
+<div class="md-cell"><p>We use a slider to test various values for the threshold. We display the gradient magnitude image.</p></div>
+<pre class="code"><code>%matplotlib inline
+from ipywidgets import interact, FloatSlider
+
+def show_edges(threshold):
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.imshow(grad_mag &gt; threshold, cmap=&#x27;gray&#x27;)
+    ax.set_title(f&#x27;edges (threshold = {threshold:.3f})&#x27;)
+    ax.axis(&#x27;off&#x27;)
+    plt.show()
+
+interact(show_edges,
+         threshold=FloatSlider(min=0.0, max=grad_mag.max(),
+                               step=0.005, value=0.2));</code></pre>
+<pre class="output">interactive(children=(FloatSlider(value=0.2, description=&#x27;threshold&#x27;, max=1.4142135623730951, step=0.005), Out…</pre>
+<div class="md-cell"><p>The edges of the subject (cameraman + camera setup) are most visible when the threshold is around 0.250 -- lower thresholds (0.090) capture the edges in the background buildings, but also admit more noise.</p></div>
+<pre class="code"><code>threshold = 0.250
+fig, ax = plt.subplots(figsize=(6, 6))
+ax.imshow(grad_mag &gt; threshold, cmap=&#x27;gray&#x27;)
+ax.set_title(f&#x27;edges (threshold = {threshold})&#x27;)
+ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_004.png" alt="notebook output 4">
+<div class="md-cell"><h3>Part 1.3: Derivative of Gaussian (DoG) Filter</h3></div>
+<div class="md-cell"><p>To get less noisy results, we use a Gaussian filter.</p></div>
+<pre class="code"><code>def gaussian_kernel_2d(size, sigma):
+    k1d = cv2.getGaussianKernel(size, sigma)
+    return k1d @ k1d.T</code></pre>
+<div class="md-cell"><p>Method 1: convolve the image with the gaussian, then convolve the result with Dx and Dy.</p></div>
+<pre class="code"><code>G = gaussian_kernel_2d(11, 2)
+blurred = convolve2d(cameraman, G, mode=&#x27;same&#x27;, boundary=&#x27;fill&#x27;)
+
+dx_b = convolve2d(blurred, Dx, mode=&#x27;same&#x27;, boundary=&#x27;fill&#x27;)
+dy_b = convolve2d(blurred, Dy, mode=&#x27;same&#x27;, boundary=&#x27;fill&#x27;)
+grad_mag_blur = np.sqrt(dx_b**2 + dy_b**2)
+edges_blur = grad_mag_blur &gt; 0.08     </code></pre>
+<div class="md-cell"><p>Method 2: Convolve Dx and Dy with the gaussian, then convolve the image with the result.</p></div>
+<pre class="code"><code>DoG_x = convolve2d(G, Dx, mode=&#x27;full&#x27;, boundary=&#x27;fill&#x27;)
+DoG_y = convolve2d(G, Dy, mode=&#x27;full&#x27;, boundary=&#x27;fill&#x27;)
+
+dx_dog = convolve2d(cameraman, DoG_x, mode=&#x27;same&#x27;, boundary=&#x27;fill&#x27;)
+dy_dog = convolve2d(cameraman, DoG_y, mode=&#x27;same&#x27;, boundary=&#x27;fill&#x27;)
+
+grad_mag_dog = np.sqrt(dx_dog**2 + dy_dog**2)
+
+print(&#x27;max diff:&#x27;, np.abs(grad_mag_blur - grad_mag_dog).max())</code></pre>
+<pre class="output">max diff: 0.3997172928805899
+</pre>
+<div class="md-cell"><p>The second method is only one convolutions <strong>against</strong> the image; the first method is two.</p></div>
+<pre class="code"><code>border = 6
+shared_vmax = max(grad_mag_blur[border:-border, border:-border].max(),
+                   grad_mag_dog[border:-border, border:-border].max())
+
+fig, axes = plt.subplots(2, 3, figsize=(15, 8))
+imgs = [blurred, grad_mag_blur, edges_blur, DoG_x, DoG_y, grad_mag_dog]
+titles = [&#x27;blurred&#x27;, &#x27;grad mag (blur path)&#x27;, &#x27;edges (t=0.08)&#x27;,
+          &#x27;DoG_x filter&#x27;, &#x27;DoG_y filter&#x27;, &#x27;grad mag (DoG path)&#x27;]
+vmaxes = [None, shared_vmax, None, None, None, shared_vmax]
+for ax, img, t, vmax in zip(axes.flat, imgs, titles, vmaxes):
+    ax.imshow(img, cmap=&#x27;gray&#x27;, vmax=vmax)
+    ax.set_title(t)
+    ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_005.png" alt="notebook output 5">
+<div class="md-cell"><p>We see that grad_mag_blur (top-middle) and grad_mag_dog (bottom-right) are identical: blurring-then-differentiating and differentiating-a-blurred-kernel-then-applying gives the same result.</p></div>
+<pre class="code"><code>thresholds = [0.02, 0.04, 0.06, 0.08, 0.10, 0.12]
+fig, axes = plt.subplots(2, 3, figsize=(15, 8))
+for ax, t in zip(axes.flat, thresholds):
+    ax.imshow(grad_mag_blur &gt; t, cmap=&#x27;gray&#x27;)   # use grad_mag_blur for 1.3
+    ax.set_title(f&#x27;t = {t}&#x27;)
+    ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_006.png" alt="notebook output 6">
+<div class="md-cell"><h3>Part 2.1: Image "Sharpening"</h3></div>
+<div class="md-cell"><p>Here we implement the unsharp masking technique: we use a Gaussian filter to derive only the low frequencies, subtract this from the original image to get the high frequencies of the image, then add these frequencies (amplified by a multiplicative __alpha___ factor) to the original image.</p></div>
+<pre class="code"><code>def blur_color(image, sigma):
+    G = gaussian_kernel_2d(6*sigma + 1, sigma)
+    if image.ndim == 2:
+        return convolve2d(image, G, mode=&#x27;same&#x27;, boundary=&#x27;fill&#x27;)
+    out = np.zeros_like(image)
+    for c in range(image.shape[2]):
+        out[..., c] = convolve2d(image[..., c], G, mode=&#x27;same&#x27;, boundary=&#x27;fill&#x27;)
+    return out
+
+def unsharp_mask(image, sigma, alpha):
+    blurred = blur_color(image, sigma)
+    return np.clip(image + alpha * (image - blurred), 0, 1)</code></pre>
+<pre class="code"><code>sharpened_taj = unsharp_mask(taj, sigma=2, alpha=1.5)
+blurred = blur_color(taj, sigma=2)
+high_freq = taj - blurred
+
+fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+for ax, img, t in zip(axes,
+        [taj, blurred, np.clip(high_freq + 0.5, 0, 1), sharpened_taj],
+        [&#x27;original&#x27;, &#x27;blurred (low freq)&#x27;, &#x27;high freq (+0.5 to view)&#x27;, &#x27;sharpened α=1.5&#x27;]):
+    ax.imshow(img)
+    ax.set_title(t); ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_007.png" alt="notebook output 7">
+<div class="md-cell"><p>We vary alpha to see how the amount of sharpening changes the result.</p></div>
+<pre class="code"><code>alphas = [0, 0.5, 1.5, 3, 6]
+fig, axes = plt.subplots(1, len(alphas), figsize=(20, 5))
+for ax, a in zip(axes, alphas):
+    ax.imshow(unsharp_mask(taj, sigma=2, alpha=a))
+    ax.set_title(f&#x27;α={a}&#x27;)
+    ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_008.png" alt="notebook output 8">
+<div class="md-cell"><p>To evaluate, let's blur an image and try to re-sharpen it. We pick an image with text so it's easier to tell the difference.</p></div>
+<pre class="code"><code>venice = img_as_float(io.imread(&#x27;venice.jpg&#x27;))
+plt.imshow(venice, cmap=&#x27;gray&#x27;)</code></pre>
+<pre class="output">&lt;matplotlib.image.AxesImage at 0x31e83de10&gt;</pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_009.png" alt="notebook output 9">
+<div class="md-cell"><p>We compute the MSE between the blurred image and the original plus between the resharpened image and the original.</p></div>
+<pre class="code"><code>blurred_venice = blur_color(venice, sigma=2)
+resharpened_venice = unsharp_mask(blurred_venice, sigma=2, alpha=1.5)
+
+mse_blur_vs_orig = np.mean((blurred_venice - venice) ** 2)
+mse_resharp_vs_orig = np.mean((resharpened_venice - venice) ** 2)
+print(f&#x27;MSE(blurred, original)     = {mse_blur_vs_orig:.5f}&#x27;)
+print(f&#x27;MSE(resharpened, original) = {mse_resharp_vs_orig:.5f}&#x27;)
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+for ax, img, t in zip(axes,
+        [venice, blurred_venice, resharpened_venice],
+        [&#x27;original (sharp)&#x27;, &#x27;blurred&#x27;, &#x27;resharpened (unsharp mask on blurred)&#x27;]):
+    ax.imshow(img)
+    ax.set_title(t); ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<pre class="output">MSE(blurred, original)     = 0.00237
+MSE(resharpened, original) = 0.00175
+</pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_010.png" alt="notebook output 10">
+<div class="md-cell"><p>The resharpened image looks crisper than the blurred one. Unsharp masking pulls the blurred image back toward the original (MSE drops from ~0.00237 to ~0.00175, about a 26% reduction) but does not fully recover it. Blurring destroys high-frequency information. </p></div>
+<div class="md-cell"><h3>Part 2.2: Hybrid Images</h3></div>
+<div class="md-cell"><p>Now we explore hybrid images, which involve blending the high-frequency parts of one image with the low-frequency parts of another.</p></div>
+<pre class="code"><code>## Load hybrid image starter files (Derek and Nutmeg)
+from align_image_code import align_images
+
+derek = img_as_float(io.imread(&#x27;DerekPicture.jpg&#x27;))
+nutmeg = img_as_float(io.imread(&#x27;nutmeg.jpeg&#x27;))
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+for ax, img, title in zip(axes, [derek, nutmeg], [&#x27;derek&#x27;, &#x27;nutmeg&#x27;]):
+    ax.imshow(img)
+    ax.set_title(title)
+    ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_011.png" alt="notebook output 11">
+<pre class="code"><code>import sys
+print(sys.executable)
+import ipympl
+print(ipympl.__file__)</code></pre>
+<pre class="output">/Users/puthyrathy/Desktop/cs180/proj1/.venv/bin/python3.11
+/Users/puthyrathy/Desktop/cs180/proj1/.venv/lib/python3.11/site-packages/ipympl/__init__.py
+</pre>
+<pre class="code"><code>%matplotlib widget
+import matplotlib
+print(matplotlib.get_backend())</code></pre>
+<pre class="output">widget
+</pre>
+<pre class="code"><code>%matplotlib qt
+nutmeg_aligned, derek_aligned = align_images(nutmeg, derek)
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+for ax, img, title in zip(axes, [derek_aligned, nutmeg_aligned], [&#x27;derek (aligned)&#x27;, &#x27;nutmeg (aligned)&#x27;]):
+    ax.imshow(img)
+    ax.set_title(title)
+    ax.axis(&#x27;off&#x27;)
+plt.show()
+%matplotlib inline</code></pre>
+<pre class="output">Please select 2 points in image 1 (no timeout -- click 2 points).
+Now select the same 2 points, in the same order, in image 2.
+</pre>
+<div class="md-cell"><p>With the images aligned, we build the hybrid: high-pass Nutmeg (sharp features, seen up close) and low-pass Derek (overall shape/color, seen from far away), then add them together. We pick σ1=4 and σ2=8 by eye -- σ1 small enough to keep only Nutmeg's fine fur/whisker detail, σ2 large enough to erase Derek's features but keep his coarse shape/coloring.</p></div>
+<pre class="code"><code>def hybrid_image(im1, im2, sigma1, sigma2):
+    &quot;&quot;&quot;im1: high-sf image (kept sharp). im2: low-sf image (kept blurry).&quot;&quot;&quot;
+    high = im1 - blur_color(im1, sigma1)
+    low = blur_color(im2, sigma2)
+    return np.clip(high + low, 0, 1)
+
+sigma1, sigma2 = 4, 8
+hybrid = hybrid_image(nutmeg_aligned, derek_aligned, sigma1, sigma2)
+
+from skimage.transform import resize
+
+def simulate_distance_view(image, shrink_factor=8):
+    small = resize(image, (image.shape[0] // shrink_factor, image.shape[1] // shrink_factor),
+                    anti_aliasing=True)
+    return resize(small, image.shape, anti_aliasing=True)
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+axes[0].imshow(hybrid); axes[0].set_title(f&#x27;hybrid (up close), σ1={sigma1}, σ2={sigma2}&#x27;); axes[0].axis(&#x27;off&#x27;)
+axes[1].imshow(simulate_distance_view(hybrid)); axes[1].set_title(&#x27;hybrid (simulated far away)&#x27;); axes[1].axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_012.png" alt="notebook output 12">
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_013.png" alt="notebook output 13">
+<div class="md-cell"><p><code>simulate_distance_view</code> shrinks the image way down then resizes it back up — the shrink step throws away fine detail, and the upsize interpolates, so the result approximates what the eye perceives from far away.</p></div>
+<pre class="code"><code>def fft_log_magnitude(image):
+    return np.log(np.abs(np.fft.fftshift(np.fft.fft2(image))) + 1e-8)</code></pre>
+<div class="md-cell"><p><strong>Frequency analysis for the Derek/Nutmeg hybrid:</strong> log-magnitude Fourier transforms of both inputs, both filtered versions, and the final hybrid.</p></div>
+<pre class="code"><code>nutmeg_high = nutmeg_aligned - blur_color(nutmeg_aligned, sigma1)
+derek_low = blur_color(derek_aligned, sigma2)
+
+fig, axes = plt.subplots(1, 5, figsize=(22, 5))
+imgs = [color.rgb2gray(derek_aligned), color.rgb2gray(nutmeg_aligned),
+        color.rgb2gray(np.clip(nutmeg_high + 0.5, 0, 1)), color.rgb2gray(derek_low),
+        color.rgb2gray(hybrid)]
+titles = [&#x27;Derek (input)&#x27;, &#x27;Nutmeg (input)&#x27;, &#x27;Nutmeg high-pass&#x27;, &#x27;Derek low-pass&#x27;, &#x27;hybrid&#x27;]
+for ax, img, t in zip(axes, imgs, titles):
+    ax.imshow(fft_log_magnitude(img), cmap=&#x27;gray&#x27;)
+    ax.set_title(t)
+    ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_014.png" alt="notebook output 14">
+<div class="md-cell"><p>We see that between the two, the image of Nutmeg has much more high-frequency detail, which makes it the natural candidate for a high-pass filter. The image of Derek gets the low-pass filter. </p>
+<p>The high-pass filter hollows out the center of Nutmeg's Fourier spectrum, leaving only high-frequency detail. The low-pass filter keeps the center of Derek's Fourier spectrum and collapses the edges to black. </p>
+<p>The hybrid is the union of Derek's bright center and Nutmeg's radiating outer streaks.</p></div>
+<div class="md-cell"><p>Now we create a few more hybrids.</p></div>
+<div class="md-cell"><h4>Hybrid #2: Baby &amp; Skull</h4></div>
+<pre class="code"><code>def resize_max_dim(image, max_dim=800):
+    &quot;&quot;&quot;Shrink image so its longer side is max_dim (no-op if already smaller).&quot;&quot;&quot;
+    scale = max_dim / max(image.shape[:2])
+    if scale &gt;= 1:
+        return image
+    new_shape = (int(image.shape[0] * scale), int(image.shape[1] * scale))
+    return resize(image, new_shape, anti_aliasing=True)
+
+baby = resize_max_dim(img_as_float(io.imread(&#x27;baby.png&#x27;))[..., :3])
+skull = resize_max_dim(img_as_float(io.imread(&#x27;skull.png&#x27;))[..., :3])
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+for ax, img, title in zip(axes, [baby, skull], [&#x27;baby&#x27;, &#x27;skull&#x27;]):
+    ax.imshow(img)
+    ax.set_title(title)
+    ax.axis(&#x27;off&#x27;)
+plt.show()
+
+%matplotlib qt
+baby_aligned, skull_aligned = align_images(baby, skull)
+%matplotlib inline
+
+hybrid_baby_skull = hybrid_image(baby_aligned, skull_aligned, sigma1=4, sigma2=8)
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+axes[0].imshow(hybrid_baby_skull); axes[0].set_title(&#x27;baby/skull hybrid (up close)&#x27;); axes[0].axis(&#x27;off&#x27;)
+axes[1].imshow(simulate_distance_view(hybrid_baby_skull)); axes[1].set_title(&#x27;(far away)&#x27;); axes[1].axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_015.png" alt="notebook output 15">
+<pre class="output">Please select 2 points in image 1 (no timeout -- click 2 points).
+Now select the same 2 points, in the same order, in image 2.
+</pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_016.png" alt="notebook output 16">
+<div class="md-cell"><h4>Hybrid #3: Bayon &amp; Buddha</h4>
+<p>Click 2 matching points on each face (e.g. both eyes) for alignment.</p></div>
+<pre class="code"><code>bayon = resize_max_dim(img_as_float(io.imread(&#x27;bayon.jpg&#x27;)))
+buddha = resize_max_dim(img_as_float(io.imread(&#x27;buddha.jpg&#x27;)))
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+for ax, img, title in zip(axes, [bayon, buddha], [&#x27;bayon&#x27;, &#x27;buddha&#x27;]):
+    ax.imshow(img)
+    ax.set_title(title)
+    ax.axis(&#x27;off&#x27;)
+plt.show()
+
+%matplotlib qt
+buddha_aligned, bayon_aligned = align_images(buddha, bayon)
+%matplotlib inline
+
+hybrid_statues = hybrid_image(buddha_aligned, bayon_aligned, sigma1=4, sigma2=8)
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+axes[0].imshow(hybrid_statues); axes[0].set_title(&#x27;buddha/bayon hybrid (up close)&#x27;); axes[0].axis(&#x27;off&#x27;)
+axes[1].imshow(simulate_distance_view(hybrid_statues)); axes[1].set_title(&#x27;(far away)&#x27;); axes[1].axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_017.png" alt="notebook output 17">
+<pre class="output">Please select 2 points in image 1 (no timeout -- click 2 points).
+Now select the same 2 points, in the same order, in image 2.
+</pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_018.png" alt="notebook output 18">
+<div class="md-cell"><h2>2.3: Gaussian and Laplacian Stacks</h2></div>
+<div class="md-cell"><p>We now implement Gaussian and Laplacian stacks.</p></div>
+<pre class="code"><code>def gaussian_stack(image, levels, sigma=2):
+    stack = [image]
+    for i in range(1, levels):
+        s = sigma * (2 ** (i - 1))
+        blurred = blur_color(image, s)
+        stack.append(blurred)
+    return stack
+
+
+def laplacian_stack(image, levels, sigma=2):
+    G = gaussian_stack(image, levels, sigma)
+    L = []
+    for i in range(levels - 1):
+        L.append(G[i] - G[i+1])
+    L.append(G[-1])
+    return L
+
+def show_stack(stack, title):
+    n = len(stack)
+    fig, axes = plt.subplots(1, n, figsize=(4*n, 4))
+    for ax, level in zip(axes, stack):
+        disp = (level - level.min()) / (level.max() - level.min())  # normalize to [0,1]
+        ax.imshow(disp); ax.axis(&#x27;off&#x27;)
+    fig.suptitle(title); plt.show()
+
+apple_gauss_stack = gaussian_stack(apple, levels=5, sigma=2)
+apple_lap_stack = laplacian_stack(apple, levels=5, sigma=2)
+
+orange_gauss_stack = gaussian_stack(orange, levels=5, sigma=2)
+orange_lap_stack = laplacian_stack(orange, levels=5, sigma=2)
+
+show_stack(apple_gauss_stack, &#x27;apple gaussian stack&#x27;)
+show_stack(apple_lap_stack, &#x27;apple laplacian stack&#x27;)
+show_stack(orange_gauss_stack, &#x27;orange gaussian stack&#x27;)
+show_stack(orange_lap_stack, &#x27;orange laplacian stack&#x27;)</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_019.png" alt="notebook output 19">
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_020.png" alt="notebook output 20">
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_021.png" alt="notebook output 21">
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_022.png" alt="notebook output 22">
+<pre class="code"><code>recon = sum(apple_lap_stack)
+print(&#x27;reconstruction error:&#x27;, np.abs(recon - apple).max())</code></pre>
+<pre class="output">reconstruction error: 1.1102230246251565e-16
+</pre>
+<div class="md-cell"><h2>2.4: Multiresolution Blending</h2></div>
+<div class="md-cell"><p>We use what we implemented in 2.3 to blend two images together -- in the first case, an image of an apple and an image of an orange.</p></div>
+<pre class="code"><code>def blend(image1, image2, mask, levels, sigma):
+    A_L = laplacian_stack(image1, levels, sigma)
+    B_L = laplacian_stack(image2, levels, sigma)
+    mask_G = gaussian_stack(mask, levels, sigma)
+
+    blended_levels = []
+    for i in range(levels):
+        lev = mask_G[i] * A_L[i] + (1 - mask_G[i]) * B_L[i]
+        blended_levels.append(lev)
+
+    blended = sum(blended_levels)
+    return np.clip(blended, 0, 1)
+
+def vertical_mask(shape):
+    mask = np.zeros(shape)
+    mask[:, :shape[1] // 2] = 1
+    return mask
+
+mask = vertical_mask(apple.shape)
+oraple = blend(apple, orange, mask, levels=5, sigma=2)
+plt.imshow(oraple)
+plt.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_023.png" alt="notebook output 23">
+<pre class="code"><code>fig, axes = plt.subplots(1, 4, figsize=(16, 4))
+for ax, img, title in zip(axes,
+        [mask, apple * mask, orange * (1 - mask), oraple],
+        [&#x27;mask&#x27;, &#x27;apple (masked)&#x27;, &#x27;orange (masked)&#x27;, &#x27;blended result&#x27;]):
+    ax.imshow(img)
+    ax.set_title(title)
+    ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_024.png" alt="notebook output 24">
+<div class="md-cell"><h3>Tennismelon</h3></div>
+<div class="md-cell"><p>We now try blending a different pair of images, that of a tennis ball and a watermelon.</p></div>
+<pre class="code"><code>tennisball = img_as_float(io.imread(&#x27;tennisball.jpeg&#x27;))
+if tennisball.ndim == 2:
+    tennisball = np.stack([tennisball] * 3, axis=-1)
+watermelon = img_as_float(io.imread(&#x27;watermelon.jpeg&#x27;))
+
+target_size = 500
+tennisball = resize(tennisball, (target_size, target_size), anti_aliasing=True)
+watermelon = resize(watermelon, (target_size, target_size), anti_aliasing=True)
+
+ball_mask = vertical_mask(tennisball.shape)
+ball_blend = blend(tennisball, watermelon, ball_mask, levels=5, sigma=2)
+
+fig, axes = plt.subplots(1, 4, figsize=(16, 4))
+for ax, img, title in zip(axes,
+        [ball_mask, tennisball * ball_mask, watermelon * (1 - ball_mask), ball_blend],
+        [&#x27;mask&#x27;, &#x27;tennis ball (masked)&#x27;, &#x27;watermelon (masked)&#x27;, &#x27;blended result&#x27;]):
+    ax.imshow(img)
+    ax.set_title(title)
+    ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_025.png" alt="notebook output 25">
+<div class="md-cell"><p>Interestingly, it looks almost as if the tennis ball is encased within watermelon skin!</p></div>
+<div class="md-cell"><h3>Irregular Mask</h3>
+<p>Both blends above use a straight-seam mask. Here we try a circular mask instead, placed at the donut's actual hole so the eyeball sits inside it.</p></div>
+<pre class="code"><code>def circular_mask(shape, center, radius):
+    h, w = shape[:2]
+    cy, cx = center
+    Y, X = np.ogrid[:h, :w]
+    dist = np.sqrt((X - cx) ** 2 + (Y - cy) ** 2)
+    m = (dist &lt;= radius).astype(float)
+    if len(shape) == 3:
+        m = np.stack([m] * shape[2], axis=-1)
+    return m
+
+donut = img_as_float(io.imread(&#x27;donut.jpeg&#x27;))
+eyeball_full = img_as_float(io.imread(&#x27;eyeball.png&#x27;))[..., :3]
+
+# donut&#x27;s hole: found by filling its silhouette and isolating the interior
+# gap -- center (225, 219), equivalent-area radius ~48px
+hole_center, hole_radius = (219, 225), 48
+
+# crop around the eyeball&#x27;s iris/pupil, shrink it to roughly hole-sized,
+# and paste it into a blank canvas at the hole&#x27;s location
+cy0, cx0, half = 259, 389, 120
+iris_crop = eyeball_full[cy0 - half:cy0 + half, cx0 - half:cx0 + half]
+patch_size = 100
+iris_patch = resize(iris_crop, (patch_size, patch_size), anti_aliasing=True)
+
+eyeball = np.ones(donut.shape)
+ph = patch_size // 2
+hcy, hcx = hole_center
+eyeball[hcy - ph:hcy - ph + patch_size, hcx - ph:hcx - ph + patch_size] = iris_patch
+
+hole_mask = circular_mask(donut.shape, hole_center, hole_radius)
+donut_eye = blend(eyeball, donut, hole_mask, levels=5, sigma=2)
+
+fig, axes = plt.subplots(1, 4, figsize=(16, 4))
+for ax, img, title in zip(axes,
+        [hole_mask, eyeball * hole_mask, donut * (1 - hole_mask), donut_eye],
+        [&#x27;hole mask&#x27;, &#x27;eyeball (masked)&#x27;, &#x27;donut (masked)&#x27;, &#x27;blended result&#x27;]):
+    ax.imshow(img)
+    ax.set_title(title)
+    ax.axis(&#x27;off&#x27;)
+plt.show()</code></pre>
+<img class="nb-img" src="images/cs180-proj2/notebook/cell_026.png" alt="notebook output 26">
+<div class="md-cell"><h2>What I learned</h2>
+<p>The biggest surprise: </p>
+<p>a convolution's kernel size sets a natural scale. The same sigma that works at one image resolution can do almost nothing at another. When I tried hybridizing images of Lincoln and Churchill, the result looked like pure Churchill because the images were too high-res for σ=8 to blur anything. </p></div>
+<div class="md-cell"><h2>Note on AI Usage</h2>
+<p>Algorithms were written manually. Explanatory notes were drafted manually. I used Claude for help with debugging (padding edge cases, matplotlib/ipympl backend issues), sourcing and compressing test images, setting up git and deploying this site, and converting the notebook into a webpage.</p></div>
+</main>
+
+</body>
+</html>
