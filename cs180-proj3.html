@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS180 Project 3 — Puthyrath Hy</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: #ffffff;
+    color: #1a1a1a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 24px 100px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .project-nav {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+    font-size: 0.95rem;
+  }
+
+  .project-nav a {
+    color: #6b6b6b;
+    text-decoration: none;
+    padding-bottom: 4px;
+    border-bottom: 2px solid transparent;
+  }
+
+  .project-nav a:hover {
+    color: #1a1a1a;
+  }
+
+  .project-nav a.active {
+    color: #1a1a1a;
+    border-bottom-color: #1a1a1a;
+    font-weight: 600;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin: 0 0 8px;
+  }
+
+  .author {
+    font-size: 1.1rem;
+    color: #6b6b6b;
+    margin: 0 0 20px;
+  }
+
+  .notebook-link {
+    display: inline-block;
+    font-size: 0.95rem;
+    color: #1a1a1a;
+    text-decoration: none;
+    border: 1px solid #d5d5d5;
+    border-radius: 6px;
+    padding: 6px 14px;
+  }
+
+  .notebook-link:hover {
+    border-color: #1a1a1a;
+  }
+
+  .md-cell {
+    margin: 28px 0;
+  }
+
+  .md-cell h1, .md-cell h2, .md-cell h3 {
+    margin: 40px 0 4px;
+  }
+
+  .md-cell h2 {
+    font-size: 1.4rem;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  .md-cell h3 {
+    font-size: 1.1rem;
+  }
+
+  .md-cell p, .md-cell li {
+    color: #333;
+  }
+
+  .md-cell code {
+    background: #f4f4f4;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+
+  .md-cell a {
+    color: #1a1a1a;
+  }
+
+  pre.code {
+    background: #f6f6f6;
+    border: 1px solid #ececec;
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    margin: 16px 0;
+  }
+
+  pre.output {
+    background: #fafafa;
+    border-left: 3px solid #ddd;
+    padding: 10px 14px;
+    overflow-x: auto;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    color: #444;
+    margin: 0 0 16px;
+    white-space: pre-wrap;
+  }
+
+  img.nb-img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    background: #f4f4f4;
+    margin: 0 0 16px;
+  }
+
+  .md-cell h1 {
+    font-size: 1.7rem;
+    margin-top: 64px;
+  }
+</style>
+<script>
+  window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body>
+
+<main>
+  <header>
+    <nav class="project-nav">
+      <a href="cs180.html">Project 0</a>
+      <a href="cs180-proj1.html">Project 1</a>
+      <a href="cs180-proj2.html">Project 2</a>
+      <a href="cs180-proj3.html" class="active">Project 3</a>
+    </nav>
+    <h1>CS180 Project 3: Flow Models</h1>
+    <p class="author">Puthyrath Hy</p>
+  </header>
+
+<div class="md-cell"><p>Part A explores a pretrained text-to-image flow model (PixNerd). Part B trains flow matching models from scratch on MNIST.</p>
+<p>Convention throughout: $x_t=(1-t)\epsilon+t x_1$, so $t=0$ is pure noise and $t=1$ is a clean image.</p></div>
+<div class="md-cell"><h1>Part A: Exploring the Power of Flow Models</h1></div>
+<div class="md-cell"><h2>1.1 Constructing Noisy Training Inputs</h2>
+<p>One noise tensor $\epsilon$ is reused at $t=0.25, 0.50, 0.75$.</p></div>
+<pre class="code"><code>def interpolate(image, noise, t):
+    return (1-t)*noise + t*image</code></pre>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_001.jpg" alt="notebook output 1" loading="lazy">
+<div class="md-cell"><h2>1.2 Classical Denoising</h2>
+<p>Each noisy input is rescaled by $1/t$ and Gaussian-blurred; the sigma with the lowest MSE to the clean image (from 1, 2, 4, 8, 16) is shown for each $t$ (0.25, 0.50, 0.75).</p></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_002.jpg" alt="notebook output 2" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_003.jpg" alt="notebook output 3" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_004.jpg" alt="notebook output 4" loading="lazy">
+<div class="md-cell"><h2>1.3 One-Step Denoising</h2>
+<p>Prompt: &quot;a high quality photo&quot;. Rows are $t = 0.25, 0.50, 0.75$.</p></div>
+<pre class="code"><code>def one_step_denoise(x, t, condition, predict_velocity):
+    return x + (1-t)*predict_velocity(x, t, condition)</code></pre>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_005.jpg" alt="notebook output 5" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_006.jpg" alt="notebook output 6" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_007.jpg" alt="notebook output 7" loading="lazy">
+<div class="md-cell"><h2>1.4 Visualizing Velocity</h2>
+<p>Updates share one symmetric RGB scale with zero at middle gray. The error maps (per-pixel RMS over RGB, computed before display scaling) share the same <code>vmin</code>/<code>vmax</code> at all three times.</p></div>
+<pre class="code"><code>@torch.inference_mode()
+def velocity_diagnostics(x_t, t, clean_image, epsilon, condition, predict_velocity):
+
+    v_hat = predict_velocity(x_t, t, condition)
+    predicted_update = (1-t) * v_hat
+
+    v_gt = clean_image - epsilon
+    target_update = (1-t) * v_gt
+
+    diff = predicted_update - target_update
+    error_map = (diff ** 2).mean(dim=1).sqrt()
+    return predicted_update, target_update, error_map</code></pre>
+<pre class="output">Original image</pre>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_008.jpg" alt="notebook output 8" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_009.jpg" alt="notebook output 9" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_010.jpg" alt="notebook output 10" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_011.jpg" alt="notebook output 11" loading="lazy">
+<div class="md-cell"><h2>1.5 Iterative Denoising with Euler Sampling</h2>
+<p>Starting from the $t=0.50$ input with $h=0.02$ (25 updates). The first figure shows the initial state, every fifth update, and the final image; the second compares Gaussian blur, one-step denoising, and Euler sampling on the same input.</p></div>
+<pre class="code"><code>@torch.inference_mode()
+def euler_sample(x_start, t_start, step_size, velocity):
+    x = x_start
+    t = float(t_start)
+    states = [(t, x)]
+    step = 0
+    while t &lt; 1.0 - 1e-8:
+        h = min(step_size, 1.0 - t)
+        x = x + h * velocity(x, t)
+        t = t + h
+        step += 1
+        if step % 5 == 0:
+            states.append((t, x))
+    if states[-1][0] &lt; 1.0 - 1e-8:
+        states.append((t, x))
+    states[-1] = (1.0, states[-1][1])
+    return x, states</code></pre>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_012.jpg" alt="notebook output 12" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_013.jpg" alt="notebook output 13" loading="lazy">
+<div class="md-cell"><h3>Comparison</h3>
+<p>Gaussian blur (1.2) does a terrible job — as a pure low-pass filter it just smears the noise around rather than actually remove it. One-step denoising does a fairly good job, but because it jumps straight to the estimate in a single velocity prediction, any error goes uncorrected and the high frequency detail remains rather blurry. Euler sampling does the best job: by taking many small steps and re-evaluating the velocity at each one, it progressively refines detail a single jump misses. Comparing its result against one-step denoising, the vertical streaks on the tower are more prominent (and closer in resemblance to the original image) and the statue at the top of the tower is more defined.</p></div>
+<div class="md-cell"><h2>1.6 Generating Images from Noise</h2>
+<p>Prompt: &quot;a high quality photo&quot;, 50 Euler steps from pure noise, seeds 180–184.</p></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_014.jpg" alt="notebook output 14" loading="lazy">
+<div class="md-cell"><p>All 5 images are pictures of people/faces, likely because the model is mostly trained on pictures of people and faces. A prompt as generic as &quot;a high quality photo&quot; thus steers the model towards what it knows best. Because these are unguided samples, quality is hit-or-miss.</p></div>
+<div class="md-cell"><h1>2. Conditional Generation and Guidance</h1></div>
+<div class="md-cell"><h2>2.1 Classifier-Free Guidance</h2>
+<p>$v_{cfg} = v_c + w(v_c - v_u)$ with $w=7$, $h=0.02$, and the empty-string prompt for $v_u$. Same seeds (180–184) as Section 1.6. With $w=0$ this reproduces the conditional prediction (checked by assertion).</p></div>
+<pre class="code"><code>def cfg_velocity(x, t, condition, w, predict_velocity, null_condition=&#x27;&#x27;):
+    v_c = predict_velocity(x, t, condition)
+    v_u = predict_velocity(x, t, null_condition)
+    return v_c + w * (v_c - v_u)</code></pre>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_015.jpg" alt="notebook output 15" loading="lazy">
+<div class="md-cell"><p>The images here are much more realistic than in the previous section. Strong prompt guidance pushes each image harder toward what a &quot;high quality photo&quot; looks like. But the tradeoff is diversity: the photos are similarly centered portraits.</p></div>
+<div class="md-cell"><h1>3. Creative Applications</h1>
+<p>Throughout: $h=0.02$, $w=7$, empty-string unconditional prompt.</p></div>
+<div class="md-cell"><h2>3.1 Image-to-Image Editing</h2>
+<p>Prompt: &quot;a high quality photo&quot;, starting times 0.02, 0.04, 0.06, 0.10, 0.14, 0.25, 0.50. Inputs: the Campanile and two of my own test images.</p></div>
+<pre class="code"><code>def edit(image, noise, t_start, condition, predict_velocity, w=7, step_size=0.02):
+    x_start = interpolate(image, noise, t_start)
+    velocity = lambda x, t: cfg_velocity(x, t, condition, w, predict_velocity)
+    final, _ = euler_sample(x_start, t_start, step_size, velocity)
+    return final</code></pre>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_016.jpg" alt="notebook output 16" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_017.jpg" alt="notebook output 17" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_018.jpg" alt="notebook output 18" loading="lazy">
+<div class="md-cell"><h3>Web image and hand-drawn images</h3>
+<p>One image from the web, then two of my own drawings.</p></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_019.jpg" alt="notebook output 19" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_020.jpg" alt="notebook output 20" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_021.jpg" alt="notebook output 21" loading="lazy">
+<div class="md-cell"><p>At t=0.02, the image is mostly noise, so the sampler generates a photo that matches the general color layout of the original image but not much else. By t=0.10, the sampler generates something that looks a lot like the campanile.</p>
+<p>A similar pattern is seen for the other starter images. At t=0.02 and t=0.04, the result diverges quite strongly from the original. t=0.06 is the transition zone, and by t=0.10, the original image is mostly recovered.</p></div>
+<div class="md-cell"><h2>3.2 Text-Guided Image Editing</h2>
+<p>Same seven starting times; each prompt is shown above its row.</p></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_022.jpg" alt="notebook output 22" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_023.jpg" alt="notebook output 23" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_024.jpg" alt="notebook output 24" loading="lazy">
+<div class="md-cell"><p>With a text prompt, the starting time controls how much the prompt can override the original. At t=0.02–0.06 the start is almost pure noise, so the prompt dominates: the Campanile becomes a blocky Minecraft tower, the sun becomes a radiant god figure, and the noodle box becomes a landscape vignette (and, at t=0.06, a horse).</p>
+<p>Around t=0.10 the two blend: the Campanile keeps its shape but gains a pixelated top and blocky Minecraft trees, a haloed face appears above the sun's square, and trees appear inside the noodle box.</p>
+<p>From t=0.14 on, the original structure is locked in and the prompt only nudges small details (e.g. the blocky trees at the Campanile's base at t=0.14), and by t=0.50 the edits are nearly identical to the originals.</p></div>
+<div class="md-cell"><h2>3.3 Visual Anagrams</h2>
+<p>The velocity is the average of $v_{cfg}(x_t, t, c_a)$ and $F(v_{cfg}(F(x_t), t, c_b))$, where $F$ rotates by 180°. Each illusion is shown upright (left) and rotated (right).</p></div>
+<pre class="code"><code>def visual_anagrams(noise, condition_a, condition_b, predict_velocity, w=7, step_size=0.02):
+    def velocity(x, t):
+        v_a = cfg_velocity(x, t, condition_a, w, predict_velocity)
+        v_b = rotate180(cfg_velocity(rotate180(x), t, condition_b, w, predict_velocity))
+        return (v_a + v_b) / 2
+    final, _ = euler_sample(noise, 0, step_size, velocity)
+    return final</code></pre>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_025.jpg" alt="notebook output 25" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_026.jpg" alt="notebook output 26" loading="lazy">
+<div class="md-cell"><h2>3.4 Hybrid Images</h2>
+<p>The velocity is the low-pass of the distant prompt's CFG velocity plus the high-pass of the close prompt's, using a Gaussian blur with kernel size 265 and sigma 16. Each hybrid is shown at full size (close view) and downsampled to 64×64 (distant view).</p></div>
+<pre class="code"><code>def make_hybrids(noise, condition_a, condition_b, predict_velocity, w=7, step_size=0.02):
+    def velocity(x, t):
+        v_a = cfg_velocity(x, t, condition_a, w, predict_velocity)   # distant / low-freq prompt
+        v_b = cfg_velocity(x, t, condition_b, w, predict_velocity)   # close / high-freq prompt
+        return lowpass(v_a) + (v_b - lowpass(v_b))
+    final, _ = euler_sample(noise, 0, step_size, velocity)
+    return final</code></pre>
+<pre class="output">Close: an ink drawing of an eagle</pre>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_027.jpg" alt="notebook output 27" loading="lazy">
+<pre class="output">Distant: an ink drawing of yin yang</pre>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_028.png" alt="notebook output 28" loading="lazy">
+<pre class="output">Close: a watercolor of a fruit stand</pre>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_029.jpg" alt="notebook output 29" loading="lazy">
+<pre class="output">Distant: a watercolor of a lighthouse</pre>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_030.png" alt="notebook output 30" loading="lazy">
+<div class="md-cell"><h1>Part B: Flow Matching from Scratch</h1></div>
+<div class="md-cell"><h1>Part 1: Training a Single-Step Denoising UNet</h1></div>
+<div class="md-cell"><h2>1.1 Implementing the UNet</h2></div>
+<pre class="code"><code>class Conv(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.net = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1)
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        return self.net(x)
+
+class DownConv(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.net = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=2, padding=1)
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        return self.net(x)
+
+class UpConv(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.net = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=4, stride=2, padding=1)
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        return self.net(x)
+
+class Flatten(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.AvgPool2d(kernel_size=7)
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        return self.net(x)
+
+class Unflatten(nn.Module):
+    def __init__(self, in_channels: int):
+        super().__init__()
+        self.net = nn.ConvTranspose2d(in_channels, in_channels, kernel_size=7, stride=7)
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        return self.net(x)
+
+class ConvBlock(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.net = nn.Sequential(
+            Conv(in_channels, out_channels),
+            nn.BatchNorm2d(out_channels),
+            nn.GELU()
+        )
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        return self.net(x)
+
+class DownBlock(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.net = nn.Sequential(
+            DownConv(in_channels, out_channels),
+            nn.BatchNorm2d(out_channels),
+            nn.GELU()
+        )
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        return self.net(x)
+
+class UpBlock(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.net = nn.Sequential(
+            UpConv(in_channels, out_channels),
+            nn.BatchNorm2d(out_channels),
+            nn.GELU()
+        )
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        return self.net(x)</code></pre>
+<pre class="code"><code>class UnconditionalUNet(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        num_hiddens: int,
+    ):
+        super().__init__()
+        D = num_hiddens
+        self.conv_in = ConvBlock(in_channels, D)
+        self.down1 = DownBlock(D, D)
+        self.down2 = DownBlock(D, 2*D)
+        self.flatten = Flatten()
+        self.flat = ConvBlock(2*D, 2*D)
+        self.unflatten = Unflatten(2*D)
+        self.unflat = ConvBlock(2*D, 2*D)
+        self.up1 = UpBlock(2*D + 2*D, D)
+        self.up2 = UpBlock(D + D, D)
+        self.out = ConvBlock(D + D, D)
+        self.final = Conv(D, in_channels)
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        assert x.shape[-2:] == (28, 28), &quot;Expect input shape to be (28, 28).&quot;
+        x1 = self.conv_in(x)
+        x2 = self.down1(x1)
+        x3 = self.down2(x2)
+        z = self.flat(self.flatten(x3))
+        y = self.unflat(self.unflatten(z))
+        y = self.up1(torch.cat([y, x3], dim=1))
+        y = self.up2(torch.cat([y, x2], dim=1))
+        y = self.out(torch.cat([y, x1], dim=1))
+        return self.final(y)</code></pre>
+<div class="md-cell"><h2>1.2 Using the UNet to Train a Denoiser</h2>
+<p>Noising process $z = x + \sigma\epsilon$ for $\sigma = 0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0$:</p></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_031.png" alt="notebook output 31" loading="lazy">
+<div class="md-cell"><h3>1.2.1 Training</h3>
+<p>Trained on $\sigma=0.5$ with batch size 256, 5 epochs, $D=128$, Adam with learning rate 1e-4; fresh noise every batch. Test-set results after the 1st and 5th epochs, then the training loss curve:</p></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_032.png" alt="notebook output 32" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_033.png" alt="notebook output 33" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_034.png" alt="notebook output 34" loading="lazy">
+<div class="md-cell"><h3>1.2.2 Out-of-Distribution Testing</h3>
+<p>The denoiser trained on $\sigma=0.5$, applied to the same test digits at $\sigma = 0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0$ (odd rows: noisy input; even rows: denoised output).</p></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_035.png" alt="notebook output 35" loading="lazy">
+<div class="md-cell"><h3>1.2.3 Denoising Pure Noise</h3>
+<p>Same setup, but the input is pure Gaussian noise. Training loss, then samples after the 1st and 5th epochs:</p></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_036.png" alt="notebook output 36" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_037.png" alt="notebook output 37" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_038.png" alt="notebook output 38" loading="lazy">
+<div class="md-cell"><p>When the input is pure noise, the best the network can do is predict the same output for every input. Under an MSE loss, the optimal constant prediction is the mean of the training targets, so the network learns the average of all MNIST digits. That's what we see: every output is the same blurry superposition of all ten digits.</p></div>
+<div class="md-cell"><h1>Part 2: Training a Flow Matching Model</h1></div>
+<div class="md-cell"><h2>2.1 Adding Time Conditioning to the UNet</h2>
+<p>The normalized time $t$ is embedded with two FCBlocks, which are added after the unflatten block and after the first up block.</p></div>
+<pre class="code"><code>class FCBlock(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(in_channels, out_channels), nn.GELU(),
+            nn.Linear(out_channels, out_channels)
+        )
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        return self.net(x)
+
+class TimeConditionalUNet(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        num_classes: int,
+        num_hiddens: int,
+    ):
+        super().__init__()
+        D = num_hiddens
+        self.conv_in = ConvBlock(in_channels, D)
+        self.down1, self.down2 = DownBlock(D, D), DownBlock(D, 2*D)
+        self.flatten, self.flat = Flatten(), ConvBlock(2*D, 2*D)
+        self.unflatten, self.unflat = Unflatten(2*D), ConvBlock(2*D, 2*D)
+        self.up1 = UpBlock(4*D, D)
+        self.up2 = UpBlock(2*D, D)
+        self.out = ConvBlock(2*D, D)
+        self.final = Conv(D, in_channels)
+        self.t1, self.t2 = FCBlock(1, 2*D), FCBlock(1, D)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        t: torch.Tensor,
+    ) -&gt; torch.Tensor:
+        assert x.shape[-2:] == (28, 28), &quot;Expect input shape to be (28, 28).&quot;
+        t = t.view(-1, 1).float()
+        t1 = self.t1(t)[:, :, None, None]
+        t2 = self.t2(t)[:, :, None, None]
+        x1 = self.conv_in(x)
+        x2 = self.down1(x1)
+        x3 = self.down2(x2)
+        y = self.unflat(self.unflatten(self.flat(self.flatten(x3))))
+        y = y + t1
+        y = self.up1(torch.cat([y, x3], 1))
+        y = y + t2
+        y = self.up2(torch.cat([y, x2], 1))
+        y = self.out(torch.cat([y, x1], 1))
+        return self.final(y)</code></pre>
+<div class="md-cell"><p>Training (Algorithm 1) and sampling (Algorithm 2):</p></div>
+<pre class="code"><code>def time_fm_forward(
+    unet: TimeConditionalUNet,
+    x_1: torch.Tensor,
+    num_ts: int,
+) -&gt; torch.Tensor:
+    unet.train()
+    x_0 = torch.randn_like(x_1)                     
+    t = torch.rand(x_1.shape[0], device=x_1.device) 
+    tb = t[:, None, None, None]
+    x_t = (1 - tb) * x_0 + tb * x_1                   
+    v_target = x_1 - x_0                             
+    v_pred = unet(x_t, t)
+    return F.mse_loss(v_pred, v_target)</code></pre>
+<pre class="code"><code>@torch.inference_mode()
+def time_fm_sample(
+    unet: TimeConditionalUNet,
+    img_wh: tuple[int, int],
+    num_ts: int,
+    seed: int = 0,
+) -&gt; torch.Tensor:
+    unet.eval()
+    n = 40                                            # how many to generate (match your grid)
+    g = torch.Generator(device=device).manual_seed(seed)
+    H, W = img_wh
+    x = torch.randn(n, 1, H, W, device=device, generator=g)   # start at pure noise
+    dt = 1.0 / num_ts
+    for i in range(num_ts):
+        t = torch.full((n,), i * dt, device=device)
+        x = x + dt * unet(x, t)                        # Euler step
+    return x</code></pre>
+<div class="md-cell"><h2>2.2 Training the Time-Conditioned UNet</h2>
+<p>Batch size 64, $D=64$, Adam with initial learning rate 1e-2, exponential decay $\gamma = 0.1^{1/10}$ stepped once per epoch, 10 epochs.</p></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_039.png" alt="notebook output 39" loading="lazy">
+<div class="md-cell"><h2>2.3 Sampling from the Time-Conditioned UNet</h2>
+<p>Samples (50 Euler steps, same seed) after epochs 1, 5, and 10.</p></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_040.png" alt="notebook output 40" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_041.png" alt="notebook output 41" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_042.png" alt="notebook output 42" loading="lazy">
+<div class="md-cell"><h2>2.4 Adding Class-Conditioning to the UNet</h2>
+<p>The one-hot class vector $c$ goes through two more FCBlocks, which scale the features before the time embedding is added. $c$ is zeroed with probability $p_{uncond}=0.1$ during training so the same network also learns the unconditional velocity for classifier-free guidance.</p></div>
+<pre class="code"><code>class ClassConditionalUNet(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        num_classes: int,
+        num_hiddens: int,
+    ):
+        super().__init__()
+        D = num_hiddens; self.num_classes = num_classes
+        self.conv_in = ConvBlock(in_channels, D)
+        self.down1, self.down2 = DownBlock(D, D), DownBlock(D, 2*D)
+        self.flatten, self.flat = Flatten(), ConvBlock(2*D, 2*D)
+        self.unflatten, self.unflat = Unflatten(2*D), ConvBlock(2*D, 2*D)
+        self.up1, self.up2 = UpBlock(4*D, D), UpBlock(2*D, D)
+        self.out, self.final = ConvBlock(2*D, D), Conv(D, in_channels)
+        self.t1, self.t2 = FCBlock(1, 2*D), FCBlock(1, D)
+        self.c1, self.c2 = FCBlock(num_classes, 2*D), FCBlock(num_classes, D)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        c: torch.Tensor,
+        t: torch.Tensor,
+        mask: Optional[torch.Tensor] = None,
+    ) -&gt; torch.Tensor:
+        assert x.shape[-2:] == (28, 28), &quot;Expect input shape to be (28, 28).&quot;
+        t = t.view(-1, 1).float()
+        c = F.one_hot(c, self.num_classes).float()      # (N, num_classes)
+        if mask is not None:
+            c = c * mask.view(-1, 1)                     # drop condition where mask==0
+        t1 = self.t1(t)[:, :, None, None]; t2 = self.t2(t)[:, :, None, None]
+        c1 = self.c1(c)[:, :, None, None]; c2 = self.c2(c)[:, :, None, None]
+        x1 = self.conv_in(x); x2 = self.down1(x1); x3 = self.down2(x2)
+        y = self.unflat(self.unflatten(self.flat(self.flatten(x3))))
+        y = c1 * y + t1                                 # class gates, time shifts
+        y = self.up1(torch.cat([y, x3], 1))
+        y = c2 * y + t2
+        y = self.up2(torch.cat([y, x2], 1))
+        y = self.out(torch.cat([y, x1], 1))
+        return self.final(y)</code></pre>
+<div class="md-cell"><p>Training (Algorithm 3) and sampling with CFG (Algorithm 4):</p></div>
+<pre class="code"><code>def class_fm_forward(
+    unet: ClassConditionalUNet,
+    x_1: torch.Tensor,
+    c: torch.Tensor,
+    p_uncond: float,
+    num_ts: int,
+) -&gt; torch.Tensor:
+    unet.train()
+    unet.train()
+    x_0 = torch.randn_like(x_1)
+    t = torch.rand(x_1.shape[0], device=x_1.device)
+    tb = t[:, None, None, None]
+    x_t = (1 - tb) * x_0 + tb * x_1
+    v_target = x_1 - x_0
+    mask = (torch.rand(x_1.shape[0], device=x_1.device) &gt; p_uncond).float()  # keep w.p. 1-p
+    return F.mse_loss(unet(x_t, c, t, mask), v_target)</code></pre>
+<pre class="code"><code>@torch.inference_mode()
+def class_fm_sample(
+    unet: ClassConditionalUNet,
+    c: torch.Tensor,
+    img_wh: tuple[int, int],
+    num_ts: int,
+    guidance_scale: float = 5.0,
+    seed: int = 0,
+) -&gt; torch.Tensor:
+    unet.eval()
+    N = c.shape[0]; H, W = img_wh
+    g = torch.Generator(device=device).manual_seed(seed)
+    x = torch.randn(N, 1, H, W, device=device, generator=g)
+    dt = 1.0 / num_ts
+    keep = torch.ones(N, device=device); drop = torch.zeros(N, device=device)
+    caches = []
+    for i in range(num_ts):
+        t = torch.full((N,), i * dt, device=device)
+        v_c = unet(x, c, t, keep)                       
+        v_u = unet(x, c, t, drop)                       
+        v = v_u + guidance_scale * (v_c - v_u)          
+        x = x + dt * v
+        caches.append(x.cpu())
+    return x, torch.stack(caches, dim=1)</code></pre>
+<div class="md-cell"><h2>2.5 Training the Class-Conditioned UNet</h2>
+<p>Same procedure as 2.2, plus class conditioning and $p_{uncond}=0.1$.</p></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_043.png" alt="notebook output 43" loading="lazy">
+<div class="md-cell"><h2>2.6 Sampling from the Class-Conditioned UNet</h2></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_044.png" alt="notebook output 44" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_045.png" alt="notebook output 45" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_046.png" alt="notebook output 46" loading="lazy">
+<div class="md-cell"><p>We sample 4 instances of each digit 0–9 using classifier-free guidance with γ = 5. Each step uses v = v_u + γ(v_c − v_u), with 300 Euler steps from pure noise at t = 0 to a clean image at t = 1. We use the same seed at every checkpoint, so differences between epochs come from training alone.</p>
+<ul>
+<li><strong>Epoch 1:</strong> The class conditioning is learned almost immediately: every sample is in the requested class, and most are clearly legible. But a few digits are malformed. In the bottom row, the 4 is cropped and the 5 is broken.</li>
+<li><strong>Epoch 5:</strong> Strokes are smoother and more even. A few weak samples remain, such as the bottom-row 5.</li>
+<li><strong>Epoch 10:</strong> All 40 samples are clean, well-formed digits. The four samples of each class vary naturally in slant and stroke thickness. The 6 in the top row is slightly overfilled.</li>
+</ul></div>
+<div class="md-cell"><h3>Removing the learning-rate scheduler</h3>
+<p>With the scheduler, the learning rate decays exponentially from 1e-2 to about 1e-3 over 10 epochs. The high early rate makes fast progress, and the lower late rate lets the model settle into a minimum. Simply deleting the scheduler would keep 1e-2 for the whole run, leaving the optimizer bouncing around a minimum instead of settling into it.</p>
+<p>To compensate, I made two changes:</p>
+<ol>
+<li><strong>A constant learning rate of 1e-3.</strong> This matches the rate the scheduled run ends at, so the model can settle the same way, at the cost of slower early progress.</li>
+<li><strong>Gradient clipping at norm 1.0.</strong> This guards against the loss spikes visible early in the training curve.</li>
+</ol></div>
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_047.png" alt="notebook output 47" loading="lazy">
+<img class="nb-img" src="images/cs180-proj3/notebook/cell_048.png" alt="notebook output 48" loading="lazy">
+<div class="md-cell"><p><strong>Result:</strong> Over the last 100 steps, the average training loss was 0.0946 without the scheduler vs. 0.0918 with it, about 3% higher. The samples are very close in quality: every digit is legible and in the correct class. The no-scheduler digits have slightly bolder, thicker strokes. So similar performance is achievable without a scheduler. The scheduler mainly buys a slightly lower final loss and faster early convergence.</p></div>
+</main>
+
+</body>
+</html>
