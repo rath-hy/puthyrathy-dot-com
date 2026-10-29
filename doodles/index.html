@@ -78,6 +78,59 @@
     padding: 20px 0;
   }
 
+  .log-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 72px 0 8px;
+    padding: 0;
+    border: none;
+  }
+
+  .log-count {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin: 0 0 16px;
+  }
+
+  .log-grid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(7, 10px);
+    grid-auto-columns: 10px;
+    gap: 3px;
+    margin: 0 0 40px;
+  }
+
+  .log-day {
+    border-radius: 2px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+  }
+
+  .log-day.on {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .log-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 65ch;
+  }
+
+  .log-list li {
+    margin: 0 0 32px;
+  }
+
+  .log-date {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    margin: 0 0 6px;
+  }
+
   @media (max-width: 640px) {
     .doodles {
       padding: 72px 16px 64px;
@@ -99,6 +152,11 @@
   <h1 class="doodles-title">Doodles</h1>
   <p class="doodles-intro">Things I made without needing a reason. Nothing here is finished, useful, or good, and that's the point.</p>
   <ul class="doodle-list" id="doodle-list"></ul>
+
+  <h2 class="log-title">Log</h2>
+  <p class="log-count" id="log-count"></p>
+  <div class="log-grid" id="log-grid" aria-label="Days with a doodling session over the last 20 weeks"></div>
+  <ul class="log-list" id="log-list"></ul>
 </main>
 
 <script>
@@ -136,6 +194,44 @@
     }
     li.appendChild(a);
     list.appendChild(li);
+  }
+
+  // One entry per doodling session, in any order; newest is shown first.
+  const log = [
+    {
+      date: '2026-10-29',
+      text: "Day one. I set up this corner of my site for things I make just to make them. I spent the session learning how color histograms work: a tally of how much of each color an image contains, ignoring where the colors sit. That led to a question: could an image generator draw any prompt using only the exact pixels of another photo? An identical histogram means the new picture is just a rearrangement of the old one's pixels, so I wrote a notebook that steers Stable Diffusion 3.5 toward a source image's colors while it generates, using sliced optimal transport, then snaps the result to the source's exact pixels. The color-matching parts work on test images. The full thing still needs a GPU run, so results next time.",
+    },
+  ];
+
+  const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const sessionDays = new Set(log.map((e) => e.date));
+
+  document.getElementById('log-count').textContent =
+    `${log.length} ${log.length === 1 ? 'session' : 'sessions'} since ${[...sessionDays].sort()[0]}`;
+
+  // Calendar grid: 20 weeks, one column per week, ending with the current week.
+  const grid = document.getElementById('log-grid');
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay() - 7 * 19);
+  for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+    const cell = document.createElement('span');
+    const key = ymd(d);
+    cell.className = sessionDays.has(key) ? 'log-day on' : 'log-day';
+    cell.title = key;
+    grid.appendChild(cell);
+  }
+
+  const logList = document.getElementById('log-list');
+  for (const e of [...log].sort((a, b) => b.date.localeCompare(a.date))) {
+    const li = document.createElement('li');
+    const date = document.createElement('span');
+    date.className = 'log-date';
+    date.textContent = e.date;
+    const p = document.createElement('p');
+    p.textContent = e.text;
+    li.append(date, p);
+    logList.appendChild(li);
   }
 </script>
 <script src="menu.js"></script>
