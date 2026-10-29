@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doodles · Rath Hy</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .doodles {
+    max-width: 1100px;
+    padding: 72px 24px 80px;
+  }
+
+  .doodles-title {
+    font-size: clamp(3rem, 10vw, 6rem);
+    font-weight: 700;
+    line-height: 1;
+    margin: 0 0 16px;
+  }
+
+  .doodles-intro {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    max-width: 50ch;
+    margin: 0 0 56px;
+  }
+
+  .doodle-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .doodle-list a {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 4px 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .doodle-list a:hover {
+    text-decoration: none;
+  }
+
+  .doodle-list a:hover .doodle-name {
+    color: var(--accent);
+  }
+
+  .doodle-date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    padding-top: 3px;
+  }
+
+  .doodle-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  .doodle-blurb {
+    grid-column: 2;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .doodle-empty {
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 20px 0;
+  }
+
+  @media (max-width: 640px) {
+    .doodles {
+      padding: 72px 16px 64px;
+    }
+
+    .doodle-list a {
+      grid-template-columns: 1fr;
+    }
+
+    .doodle-blurb {
+      grid-column: 1;
+    }
+  }
+</style>
+</head>
+<body>
+
+<main class="doodles">
+  <h1 class="doodles-title">Doodles</h1>
+  <p class="doodles-intro">Things I made without needing a reason. Nothing here is finished, useful, or good, and that's the point.</p>
+  <ul class="doodle-list" id="doodle-list"></ul>
+</main>
+
+<script>
+  // One entry per doodle, which lives at doodles/<slug>/index.html.
+  const doodles = [
+    // { slug: 'some-idea', title: 'Some idea', date: '2026-10-29', blurb: 'What sparked it.' },
+  ];
+
+  const list = document.getElementById('doodle-list');
+  const sorted = [...doodles].sort((a, b) => b.date.localeCompare(a.date));
+
+  if (sorted.length === 0) {
+    list.innerHTML = '<li class="doodle-empty">Nothing here yet. Soon.</li>';
+  }
+
+  for (const d of sorted) {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = `${d.slug}/index.html`;
+
+    const date = document.createElement('span');
+    date.className = 'doodle-date';
+    date.textContent = d.date;
+
+    const name = document.createElement('span');
+    name.className = 'doodle-name';
+    name.textContent = d.title;
+
+    a.append(date, name);
+    if (d.blurb) {
+      const blurb = document.createElement('span');
+      blurb.className = 'doodle-blurb';
+      blurb.textContent = d.blurb;
+      a.append(blurb);
+    }
+    li.appendChild(a);
+    list.appendChild(li);
+  }
+</script>
+<script src="menu.js"></script>
+
+</body>
+</html>
