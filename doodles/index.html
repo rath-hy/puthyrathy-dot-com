@@ -95,16 +95,22 @@
   .log-grid {
     display: grid;
     grid-auto-flow: column;
-    grid-template-rows: repeat(7, 10px);
-    grid-auto-columns: 10px;
-    gap: 3px;
+    grid-template-rows: repeat(7, 20px);
+    grid-auto-columns: 20px;
+    gap: 6px;
     margin: 0 0 40px;
+    padding-bottom: 4px;
+    overflow-x: auto;
   }
 
   .log-day {
-    border-radius: 2px;
+    border-radius: 4px;
     background: var(--card-bg);
     border: 1px solid var(--border);
+  }
+
+  .log-day.future {
+    background: transparent;
   }
 
   .log-day.on {
@@ -155,7 +161,7 @@
 
   <h2 class="log-title">Log</h2>
   <p class="log-count" id="log-count"></p>
-  <div class="log-grid" id="log-grid" aria-label="Days with a doodling session over the last 20 weeks"></div>
+  <div class="log-grid" id="log-grid" aria-label="Days with a doodling session, from day one through the end of the year"></div>
   <ul class="log-list" id="log-list"></ul>
 </main>
 
@@ -210,14 +216,17 @@
   document.getElementById('log-count').textContent =
     `${log.length} ${log.length === 1 ? 'session' : 'sessions'} since ${[...sessionDays].sort()[0]}`;
 
-  // Calendar grid: 20 weeks, one column per week, ending with the current week.
+  // Calendar grid: from day one (the first logged session) through Dec 31 of this year,
+  // filling columns of 7 top to bottom.
   const grid = document.getElementById('log-grid');
-  const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay() - 7 * 19);
-  for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+  const [y, m, d0] = [...sessionDays].sort()[0].split('-').map(Number);
+  const start = new Date(y, m - 1, d0);
+  const today = ymd(new Date());
+  const end = new Date(new Date().getFullYear(), 11, 31);
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const cell = document.createElement('span');
     const key = ymd(d);
-    cell.className = sessionDays.has(key) ? 'log-day on' : 'log-day';
+    cell.className = sessionDays.has(key) ? 'log-day on' : key > today ? 'log-day future' : 'log-day';
     cell.title = key;
     grid.appendChild(cell);
   }
