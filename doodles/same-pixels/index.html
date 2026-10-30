@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Same pixels, new picture · Rath Hy</title>
+<meta name="description" content="An image generator that can only use the exact pixels of another photo.">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .sp {
+    max-width: 1100px;
+    padding: 72px 24px 80px;
+  }
+
+  .sp-title {
+    font-size: clamp(2.4rem, 7vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.05;
+    margin: 0 0 20px;
+  }
+
+  .sp-lede {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    max-width: 60ch;
+    margin: 0 0 48px;
+  }
+
+  .sp-prose {
+    max-width: 65ch;
+  }
+
+  .sp h2 {
+    border: none;
+    padding: 0;
+    margin: 64px 0 12px;
+  }
+
+  figure {
+    margin: 0 0 40px;
+  }
+
+  /* The figures are wide strips of five panels; on narrow screens, scroll them sideways. */
+  .sp-strip {
+    overflow-x: auto;
+    border-radius: 6px;
+  }
+
+  .sp-strip img,
+  .sp-strip video {
+    width: 100%;
+    min-width: 760px;
+    display: block;
+    border-radius: 6px;
+  }
+
+  figcaption {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    max-width: 75ch;
+    margin-top: 10px;
+  }
+
+  .sp-links {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .sp-links a {
+    display: inline-block;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+  }
+
+  .sp-links a:hover {
+    border-color: var(--accent);
+    text-decoration: none;
+  }
+
+  @media (max-width: 640px) {
+    .sp {
+      padding: 72px 16px 64px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<main class="sp">
+  <h1 class="sp-title">Same pixels, new picture</h1>
+  <p class="sp-lede">Can an AI draw anything you ask for using only the exact pixels of another photo? Not similar colors: the same pixels, every one used exactly once, like building a mosaic out of the tiles of a different mosaic.</p>
+
+  <section id="animation" hidden>
+    <figure>
+      <div class="sp-strip">
+        <video autoplay loop muted playsinline poster="generation_poster.jpg">
+          <source src="generation.mp4" type="video/mp4">
+        </video>
+      </div>
+      <figcaption>The model drawing "a snowy mountain range at dawn," shown as its running guess of the final image. Middle: drawing freely. Right: the same run, repainted in the beach photo's colors a few times along the way. Each time, the model adapts the scene to fit the colors it's stuck with. At the end, both are swapped onto the beach's exact pixels.</figcaption>
+    </figure>
+  </section>
+
+  <figure>
+    <div class="sp-strip">
+      <img src="sunset_to_mountain.jpg" alt="Five panels: a sunset beach; a snowy blue mountain; that mountain forced onto the beach's pixels, with striped orange bands; a mountain lit orange by sunset; and the same mountain snapped to the beach's exact pixels.">
+    </div>
+    <figcaption>Source: a beach at sunset. Prompt: "a snowy mountain range at dawn." Left to right: the source; the model drawing freely; that drawing forced onto the source's pixels afterward; the model drawing with its colors steered toward the source's; that drawing snapped onto the source's exact pixels.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="sp-strip">
+      <img src="angkorwat_to_jamesbond.jpg" alt="Five panels: Angkor Wat at golden hour; a black-and-white portrait of a man in a tuxedo; that portrait forced onto the temple's pixels, blotchy and brown; a warmly lit color portrait; and the same portrait snapped to the temple's exact pixels.">
+    </div>
+    <figcaption>Source: Angkor Wat at golden hour. Prompt: a classic spy-film portrait. The freely drawn portrait is black and white, so recoloring it afterward can't work. Steered while drawing, the model lights the scene warmly instead.</figcaption>
+  </figure>
+
+  <div class="sp-prose">
+    <h2>How it works</h2>
+    <p>Pour all of a photo's pixels into a bucket and you get its color histogram: which colors it has and how many of each, with no record of where they were. An image with exactly the same histogram and the same size is just a rearrangement of those pixels.</p>
+    <p>Fixing the colors after the image is drawn goes badly. A blue-and-white mountain has nowhere sensible to put a sunset's worth of orange, so it gets smeared across the sky in bands. Instead, I enforce the bucket while the image is still being drawn. Image generators (here, Stable Diffusion 3.5) start from static and sharpen it over a few dozen steps. A few times along the way, I take the model's rough draft, repaint it in the source's colors with a technique called sliced optimal transport, and hand it back. The model then reworks the scene so those colors make sense: the snow becomes alpenglow. At the very end, every pixel is swapped for a distinct pixel from the source, and because the picture was already planned around those colors, the swap barely shows.</p>
+    <p>The notebook runs on a free Google Colab GPU. It ends with a technical write-up covering the math, limitations, ideas for future work and a bibliography.</p>
+    <ul class="sp-links">
+      <li><a href="https://colab.research.google.com/github/rath-hy/puthyrathy-dot-com/blob/main/doodles/same-pixels/same_pixels.ipynb">Open the notebook in Colab</a></li>
+      <li><a href="https://github.com/rath-hy/puthyrathy-dot-com/blob/main/doodles/same-pixels/same_pixels.ipynb">Read it on GitHub</a></li>
+      <li><a href="same_pixels.ipynb" download>Download .ipynb</a></li>
+    </ul>
+  </div>
+</main>
+
+<script>
+  // The animation is shown only once generation.mp4 has been added next to this page.
+  fetch('generation.mp4', { method: 'HEAD' })
+    .then((r) => {
+      if (r.ok && (r.headers.get('content-type') || '').startsWith('video/')) {
+        document.getElementById('animation').hidden = false;
+      }
+    })
+    .catch(() => {});
+</script>
+<script src="../menu.js"></script>
+
+</body>
+</html>

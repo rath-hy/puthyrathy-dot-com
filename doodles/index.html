@@ -168,7 +168,7 @@
 <script>
   // One entry per doodle, which lives at doodles/<slug>/index.html.
   const doodles = [
-    // { slug: 'some-idea', title: 'Some idea', date: '2026-10-29', blurb: 'What sparked it.' },
+    { slug: 'same-pixels', title: 'Same pixels, new picture', date: '2026-10-29', blurb: 'An image generator that can only use the exact pixels of another photo.' },
   ];
 
   const list = document.getElementById('doodle-list');
@@ -207,6 +207,10 @@
     {
       date: '2026-10-29',
       text: "Day one. I set up this corner of my site for things I make just to make them. I spent the session learning how color histograms work: a tally of how much of each color an image contains, ignoring where the colors sit. That led to a question: could an image generator draw any prompt using only the exact pixels of another photo? An identical histogram means the new picture is just a rearrangement of the old one's pixels, so I wrote a notebook that steers Stable Diffusion 3.5 toward a source image's colors while it generates, using sliced optimal transport, then snaps the result to the source's exact pixels. The color-matching parts work on test images. The full thing still needs a GPU run, so results next time.",
+    },
+    {
+      date: '2026-10-30',
+      text: "Day two. I ran the same-pixels notebook on a Colab GPU and it works better than I expected. Asked for a snowy mountain using only the pixels of a sunset beach, the model doesn't just tint the snow orange; it relights the whole scene as alpenglow. A black-and-white spy-movie portrait drawn from a photo of Angkor Wat turned into a warmly lit color portrait. Forcing the colors on after the fact, by comparison, gives ugly stripes and blotches, which is the whole point. I wrote up how it works with a proper bibliography, added a cell that records every step of the generation as a video, and gave the project its own page here.",
     },
   ];
 
