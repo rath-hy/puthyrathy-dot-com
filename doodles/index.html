@@ -168,6 +168,7 @@
 <script>
   // One entry per doodle, which lives at doodles/<slug>/index.html.
   const doodles = [
+    { slug: 'fold-map', title: 'Fold map', date: '2026-10-31', blurb: 'Predicting which parts of the paper show on a folded crane, then checking with a pencil.' },
     { slug: 'same-pixels', title: 'Same pixels, new picture', date: '2026-10-29', blurb: 'An image generator that can only use the exact pixels of another photo.' },
   ];
 
@@ -211,6 +212,10 @@
     {
       date: '2026-10-30',
       text: "Day two. I ran the same-pixels notebook on a Colab GPU and it works better than I expected. Asked for a snowy mountain using only the pixels of a sunset beach, the model doesn't just tint the snow orange; it relights the whole scene as alpenglow. A black-and-white spy-movie portrait drawn from a photo of Angkor Wat turned into a warmly lit color portrait. Forcing the colors on after the fact, by comparison, gives ugly stripes and blotches, which is the whole point. I wrote up how it works with a proper bibliography, added a cell that records every step of the generation as a video, and gave the project its own page here.",
+    },
+    {
+      date: '2026-10-31',
+      text: "Day three, and a new doodle. I'm thinking about an origami project for my computer vision class: printing pictures on paper so they only come together once it's folded, or hiding things in the parts nobody sees. That needs one thing first: knowing which parts of the square stay visible after folding. Working out where each piece of paper lands is easy, but which layer ends up on top is a genuinely hard problem, so I used Flat-Folder, Jason Ku's origami solver, to get the stacking for a traditional crane, then wrote a script that turns it into a map of which parts of the sheet show on each side of the bird. About a quarter of the paper does. Then I tested it for real: I folded a crane out of notebook paper, shaded one side with straight pencil lines and the other with circles, and unfolded it. The shading matches the map.",
     },
   ];
 

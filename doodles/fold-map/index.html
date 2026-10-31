@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fold map · Rath Hy</title>
+<meta name="description" content="Predicting which parts of a sheet of paper show on a folded origami crane, then checking with a pencil.">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .fm {
+    max-width: 1100px;
+    padding: 72px 24px 80px;
+  }
+
+  .fm-title {
+    font-size: clamp(2.4rem, 7vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.05;
+    margin: 0 0 20px;
+  }
+
+  .fm-lede {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    max-width: 60ch;
+    margin: 0 0 48px;
+  }
+
+  .fm-prose {
+    max-width: 65ch;
+  }
+
+  .fm h2 {
+    border: none;
+    padding: 0;
+    margin: 64px 0 12px;
+  }
+
+  figure {
+    margin: 0 0 40px;
+  }
+
+  .fm-pair,
+  .fm-trio {
+    display: grid;
+    gap: 16px;
+  }
+
+  .fm-pair {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .fm-trio {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .fm-pair img,
+  .fm-trio img {
+    width: 100%;
+    border-radius: 6px;
+  }
+
+  .fm-pair img {
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+
+  .fm-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 6px;
+  }
+
+  figcaption {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    max-width: 75ch;
+    margin-top: 12px;
+  }
+
+  .swatch {
+    display: inline-block;
+    width: 0.8em;
+    height: 0.8em;
+    border-radius: 2px;
+    vertical-align: -0.05em;
+    margin-right: 4px;
+  }
+
+  .fm-links {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .fm-links a {
+    display: inline-block;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+  }
+
+  .fm-links a:hover {
+    border-color: var(--accent);
+    text-decoration: none;
+  }
+
+  @media (max-width: 640px) {
+    .fm {
+      padding: 72px 16px 64px;
+    }
+
+    .fm-pair,
+    .fm-trio {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<main class="fm">
+  <h1 class="fm-title">Fold map</h1>
+  <p class="fm-lede">When you fold a crane, most of the paper ends up tucked inside. I wanted to predict exactly which parts of the square stay visible, from the crease pattern alone, and then check the prediction with a real crane and a pencil.</p>
+
+  <figure>
+    <div class="fm-pair">
+      <div>
+        <img src="crane_crease_pattern_shaded_crop.jpg" alt="An unfolded square of lined notebook paper covered in creases, with pencil shading in straight lines on some regions and loopy circles on others.">
+        <div class="fm-label">What I shaded on a real crane, unfolded</div>
+      </div>
+      <div>
+        <img src="visibility_map.png" alt="The crane's crease pattern with regions colored blue and tan, in the same places as the shading in the photo.">
+        <div class="fm-label">What the computer predicted</div>
+      </div>
+    </div>
+    <figcaption>Left: I folded a crane from notebook paper, shaded everything visible on one face with straight lines and on the other face with circles, then unfolded it. Right: the prediction, computed before any folding. <span class="swatch" style="background:#5c8ccc"></span>blue is visible on one face (the straight lines), <span class="swatch" style="background:#d4b07a"></span>tan on the other (the circles), and light gray is hidden. They match.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="fm-trio">
+      <img src="crane_folded.jpg" alt="A small white origami crane on a desk.">
+      <img src="crane_front_shaded_straight.jpg" alt="A flat-folded crane next to a pencil, its visible surface shaded with straight pencil lines.">
+      <img src="crane_back_shaded_circular.jpg" alt="The other side of the flat-folded crane, shaded with loopy pencil circles.">
+    </div>
+    <figcaption>The crane, then the flat-folded crane shaded on each side before unfolding.</figcaption>
+  </figure>
+
+  <div class="fm-prose">
+    <h2>How it works</h2>
+    <p>A crease pattern is the map of fold lines on the unfolded square. Working out where each piece of paper lands after folding is easy: every crease is a reflection. The hard part is the stacking. Where several layers pile up, which one is on top? That's what decides what you see, and in general it's a famously hard problem.</p>
+    <p>For that I used <a href="https://github.com/origamimagiro/flat-folder">Flat-Folder</a>, Jason Ku's solver, which finds every valid way the layers can stack. For the traditional crane it finds 5. I wrote a script that takes its answer and, for every point on the square, checks whether that point ends up as the outermost layer on either face of the folded crane. About a quarter of the paper does. The rest is hidden inside.</p>
+    <p>This is a first step toward a computer vision class project: if I know exactly where each visible bit of the folded model comes from on the sheet, I can print images on paper that only come together once it's folded, or hide things in the parts no one sees.</p>
+    <ul class="fm-links">
+      <li><a href="https://github.com/rath-hy/doodles/tree/main/2026-10-31-fold-map">Code on GitHub</a></li>
+      <li><a href="https://github.com/origamimagiro/flat-folder">Flat-Folder</a></li>
+    </ul>
+  </div>
+</main>
+
+<script src="../menu.js"></script>
+
+</body>
+</html>
