@@ -129,6 +129,22 @@
     margin: 0 0 32px;
   }
 
+  .log-media {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 12px 0 0;
+  }
+
+  .log-media img,
+  .log-media video {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+  }
+
   .log-date {
     display: block;
     color: var(--text-muted);
@@ -217,6 +233,17 @@
       date: '2026-10-31',
       text: "Day three, and a new doodle. I'm thinking about an origami project for my computer vision class: printing pictures on paper so they only come together once it's folded, or hiding things in the parts nobody sees. That needs one thing first: knowing which parts of the square stay visible after folding. Working out where each piece of paper lands is easy, but which layer ends up on top is a genuinely hard problem, so I used Flat-Folder, Jason Ku's origami solver, to get the stacking for a traditional crane, then wrote a script that turns it into a map of which parts of the sheet show on each side of the bird. About a quarter of the paper does. Then I tested it for real: I folded a crane out of notebook paper, shaded one side with straight pencil lines and the other with circles, and unfolded it. The shading matches the map.",
     },
+    {
+      date: '2026-11-01',
+      text: "Day four, and the first real illusion. Last night I worked out which way is up on every visible patch of the crane, so I could print a picture on the flat square that lands upright on the folded bird, and turned the whole workflow into a notebook. Then I tried the actual goal: paper that shows one picture flat and different ones folded. I adapted Visual Anagrams, a technique for images that change when you flip them, so that while DeepFloyd generates the image it keeps checking the sheet both flat and folded. Colab crashed from running out of memory the first time, but after some reshuffling I got an oil painting of a city street at night that, folded on the computer, puts a fox on one side of the crane and an owl on the other. This morning I printed it, cut out the square and folded it. The fox shows up, orange with an eye in the right spot. The owl is barely there: the print came out dark and muddy, white creases cut across it, and my folds aren't precise enough. Next I want bolder, simpler pictures that survive a home printer.",
+      media: [
+        { src: 'fold-map/trial1_precut.jpg', alt: 'The city-street painting printed twice on an A4 sheet.' },
+        { src: 'fold-map/trial1_timelapse.mp4', alt: 'Timelapse of folding the printed square into a crane.' },
+        { src: 'fold-map/trial1_fox.jpg', alt: 'The folded crane from the front, with an orange fox face on its body.' },
+        { src: 'fold-map/trial1_owl.jpg', alt: 'The folded crane from the back, where the owl is faint.' },
+      ],
+      link: 'fold-map/',
+    },
   ];
 
   const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -249,6 +276,27 @@
     const p = document.createElement('p');
     p.textContent = e.text;
     li.append(date, p);
+    // Optional photos or videos, shown as a strip of thumbnails linking to the doodle.
+    if (e.media) {
+      const strip = document.createElement(e.link ? 'a' : 'div');
+      strip.className = 'log-media';
+      if (e.link) strip.href = e.link;
+      for (const m of e.media) {
+        let el;
+        if (m.src.endsWith('.mp4')) {
+          el = document.createElement('video');
+          Object.assign(el, { autoplay: true, muted: true, loop: true, playsInline: true });
+          el.setAttribute('aria-label', m.alt);
+        } else {
+          el = document.createElement('img');
+          el.alt = m.alt;
+          el.loading = 'lazy';
+        }
+        el.src = m.src;
+        strip.appendChild(el);
+      }
+      li.appendChild(strip);
+    }
     logList.appendChild(li);
   }
 </script>

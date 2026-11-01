@@ -70,6 +70,26 @@
     object-fit: cover;
   }
 
+  .fm-quad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .fm-quad img,
+  .fm-quad video {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 6px;
+    display: block;
+  }
+
+  .fm-wide {
+    width: 100%;
+    border-radius: 6px;
+  }
+
   .fm-label {
     color: var(--text-muted);
     font-size: 0.85rem;
@@ -123,6 +143,10 @@
     .fm-trio {
       grid-template-columns: 1fr;
     }
+
+    .fm-quad {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 </style>
 </head>
@@ -163,6 +187,42 @@
     <ul class="fm-links">
       <li><a href="https://github.com/rath-hy/doodles/tree/main/2026-10-31-fold-map">Code on GitHub</a></li>
       <li><a href="https://github.com/origamimagiro/flat-folder">Flat-Folder</a></li>
+    </ul>
+
+    <h2>Trial 1: a city that folds into a fox and an owl</h2>
+    <p>Next I tried an illusion: one picture when the paper is flat, different pictures once it's folded. I adapted <a href="https://dangeng.github.io/visual_anagrams/">Visual Anagrams</a> (Geng, Park and Owens), which makes images that change when you flip or rotate them. At every step of generating the image, the model looks at the sheet both flat and folded, with a different prompt for each, and the two suggestions are blended pixel by pixel. Flat, I asked for an oil painting of a city street at night. Folded, a red fox on the front of the crane and a white owl on the back.</p>
+    <p>On the computer it works: fold the painting virtually and the fox and the owl appear. On real paper, the fox comes through, orange with an eye in the right place. The owl is much harder to make out. The printer made everything darker and muddier, white creases cut through the picture, and my folds don't line up perfectly.</p>
+  </div>
+
+  <figure>
+    <img class="fm-wide" src="trial1_virtual_fold.jpg" alt="Left, an oil painting of a crowded city street at night. Middle, the same sheet folded into a crane on the computer, showing a fox's face on the body. Right, the other side of the crane, showing an owl.">
+    <figcaption>The generated sheet, and the crane folded from it on the computer: fox on the front, owl on the back.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="fm-quad">
+      <div>
+        <img src="trial1_precut.jpg" alt="An A4 sheet printed with two copies of the city-street painting, one above the other.">
+        <div class="fm-label">Printed, two to a page</div>
+      </div>
+      <div>
+        <video src="trial1_timelapse.mp4" autoplay muted loop playsinline aria-label="Timelapse of the printed square being folded into a crane."></video>
+        <div class="fm-label">Folding it (timelapse)</div>
+      </div>
+      <div>
+        <img src="trial1_fox.jpg" alt="The folded crane from the front, its body orange with a fox's eye visible.">
+        <div class="fm-label">Front: the fox</div>
+      </div>
+      <div>
+        <img src="trial1_owl.jpg" alt="The folded crane from the back, gray and mottled, the owl hard to make out.">
+        <div class="fm-label">Back: the owl, faintly</div>
+      </div>
+    </div>
+  </figure>
+
+  <div class="fm-prose">
+    <ul class="fm-links">
+      <li><a href="https://github.com/rath-hy/doodles/blob/main/2026-10-31-fold-map/illusions.ipynb">Illusions notebook</a></li>
     </ul>
   </div>
 </main>
