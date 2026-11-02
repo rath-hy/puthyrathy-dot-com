@@ -244,6 +244,10 @@
       ],
       link: 'fold-map/',
     },
+    {
+      date: '2026-11-02',
+      text: "Day five, mostly thinking about why the folding story isn't working yet. The biggest problem turned out to be pixels. The image generator first draws the whole sheet at 64 by 64 pixels, and the finished crane only shows about a tenth of the sheet, so its picture gets composed in a patch about 16 by 22 pixels. Printing the paper bigger doesn't help, since the crane's share of the sheet is fixed by the folds. So I set up an experiment with two fixes: letting the second, high-resolution pass redraw the folded pictures instead of just sharpening them, and running the first pass at 128 pixels. The new story is a home planet seen from above, a rocket on the bird base, and a ringed planet on the finished crane. I also measured a dozen other origami models to see if the crane is even the right one to test on. It hides pictures well but shows little paper. Yakko-san looks better on both counts, except that its in-between folding stages can't be pulled out of its finished creases, so I'd have to work them out by hand. Results once I get a GPU run in.",
+    },
   ];
 
   const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
