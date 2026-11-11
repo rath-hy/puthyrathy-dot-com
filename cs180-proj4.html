@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CS180 Project 4A: Image Warping and Mosaicing</title>
+<title>CS180 Project 4: Image Warping, Mosaicing &amp; Autostitching</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
@@ -36,13 +36,21 @@
   .projects b { color: var(--walnut); border-bottom: 1px solid var(--walnut); }
   .eyebrow { margin: 0; font: 600 14px/1 'Cormorant Garamond', serif; letter-spacing: 0.32em;
              text-transform: uppercase; color: var(--terracotta); }
-  header h1 { margin: 14px 0 6px; font: 700 clamp(34px, 6vw, 56px)/1.05 'Cormorant Garamond', serif; color: var(--walnut); }
+  header h1 { margin: 14px 0 6px; font: 700 clamp(30px, 4.6vw, 50px)/1.05 'Cormorant Garamond', serif; color: var(--walnut); }
   .byline { margin: 0; font-style: italic; color: var(--muted); }
   nav { margin-top: 26px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   nav a { padding: 10px 16px 6px; border-radius: 22px 22px 3px 3px; background: var(--walnut);
           border: 1px solid var(--brass); color: var(--stucco); text-decoration: none;
           font: 600 15px/1 'Cormorant Garamond', serif; letter-spacing: 0.04em; transition: background 0.2s; }
   nav a:hover { background: var(--terracotta); }
+  nav.partnav { align-items: center; margin-top: 14px; }
+  nav.partnav span { font: 600 13px/1 'Cormorant Garamond', serif; letter-spacing: 0.24em; text-transform: uppercase;
+                     color: var(--terracotta); min-width: 64px; }
+  .part { margin-top: 72px; padding: 28px 16px 8px; text-align: center; border-top: 3px double var(--terracotta); }
+  .part h2 { font-size: clamp(30px, 5vw, 42px); margin-top: 10px; justify-content: center; }
+  .part h2::before, .part h2::after { display: none; }
+  figure.narrow { max-width: 680px; margin-left: auto; margin-right: auto; }
+  p.note { text-align: center; color: var(--muted); font-style: italic; font-size: 16px; margin-top: -6px; }
 
   /* clay roof tiles */
   .tiles { height: 24px; background:
@@ -103,14 +111,16 @@
 <header>
   <div class="arch">
     <p class="projects"><a href="cs180.html">Project 0</a><a href="cs180-proj1.html">Project 1</a><a href="cs180-proj2.html">Project 2</a><a href="cs180-proj3.html">Project 3</a><b>Project 4</b></p>
-    <p class="eyebrow">CS180 &middot; Project 4A</p>
-    <h1>Image Warping &amp; Mosaicing</h1>
+    <p class="eyebrow">CS180 &middot; Project 4</p>
+    <h1>Image Warping, Mosaicing &amp; Autostitching</h1>
     <p class="byline">Puthyrath Hy</p>
-    <nav><a href="#a1">Pictures</a><a href="#a2">Homographies</a><a href="#a3">Warping</a><a href="#a4">Mosaics</a></nav>
+    <nav class="partnav"><span>Part A</span><a href="#a1">Pictures</a><a href="#a2">Homographies</a><a href="#a3">Warping</a><a href="#a4">Mosaics</a></nav>
+    <nav class="partnav"><span>Part B</span><a href="#b1">Corners</a><a href="#b2">Descriptors</a><a href="#b3">Matching</a><a href="#b4">RANSAC</a></nav>
   </div>
 </header>
 <div class="tiles"></div>
 <main>
+<div class="part" id="partA"><p class="eyebrow">Part A</p><h2>Image Warping and Mosaicing</h2></div>
 <section id="a1"><h2>A.1 &nbsp;Shooting the Pictures</h2><p>I took these pictures around International House with my (ancient) iPhone 11. I used 1x zoom and turned off
 Live Photos so every shot was processed the same way. To keep the center of projection fixed, I held the phone
 against my chest and rotated at the waist, which turns the camera roughly about its center without translating it.
@@ -402,6 +412,165 @@ are imperfect.</p>
 <h3>Chimney</h3><figure class="wide"><img src="images/cs180-proj4/chimney_sources.jpg" alt="Source images" loading="lazy"><figcaption>Source images</figcaption></figure><figure class="wide mosaic"><img src="images/cs180-proj4/chimney_mosaic.jpg" alt="Mosaic" loading="lazy"><figcaption>Mosaic</figcaption></figure><p><strong>Mosaic 3 (chimney):</strong> The windows, the roofline and the chimney still line up across the seams, and the sky's
 gradient blends well.</p>
 
+</section>
+<div class="part" id="partB"><p class="eyebrow">Part B</p><h2>Feature Matching for Autostitching</h2></div>
+<section id="b1"><h2>B.1 &nbsp;Harris Corner Detection</h2><p>We pick Harris corners from the images.</p>
+
+<details class="code"><summary>Implementation: <code>detect_corners</code></summary><pre><code class="language-python">def detect_corners(gray, edge_discard=20):
+    &quot;&quot;&quot;Harris corners as (n, 2) (x, y) points, plus their corner strengths (n,).&quot;&quot;&quot;
+    h, coords = get_harris_corners(gray, edge_discard)
+    rows, cols = coords
+    return np.stack([cols, rows], axis=1).astype(np.float64), h[rows, cols]
+
+
+def plot_points(ax, im, pts, title, color=&#x27;r&#x27;, size=3):
+    ax.imshow(im)
+    ax.plot(pts[:, 0], pts[:, 1], &#x27;.&#x27;, color=color, ms=size)
+    ax.set_title(title)
+    ax.axis(&#x27;off&#x27;)</code></pre></details>
+<h3>Adaptive Non-Maximal Suppression</h3><p>We want only strong and spatially spread out points.</p>
+
+<details class="code"><summary>Implementation: <code>anms</code></summary><pre><code class="language-python">def anms(pts, strengths, n_keep=500, c_robust=0.9, max_candidates=5000):
+    &quot;&quot;&quot;Keep the n_keep points with the largest suppression radius r_i =
+    min ||x_i - x_j|| over j with f_i &lt; c_robust * f_j.&quot;&quot;&quot;
+    order = np.argsort(-strengths)[:max_candidates]  # strongest candidates only, to bound memory
+    pts, f = pts[order], strengths[order]
+    D = dist2(pts, pts)
+    D[~(f[:, None] &lt; c_robust * f[None, :])] = np.inf
+    r2 = D.min(axis=1)  # squared radius
+    keep = np.argsort(-r2)[:n_keep]
+    return pts[keep], f[keep], np.sqrt(r2[keep])</code></pre></details>
+<p>On the left, we display all the Harris corners. On the right, the 500 corners remaining after ANMS.</p>
+
+<figure class="wide"><img src="images/cs180-proj4/b_wall_corners.jpg" alt="Wall (middle image): all Harris corners vs. after ANMS" loading="lazy"><figcaption>Wall (middle image): all Harris corners vs. after ANMS</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_door_corners.jpg" alt="Door (middle image): all Harris corners vs. after ANMS" loading="lazy"><figcaption>Door (middle image): all Harris corners vs. after ANMS</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_chimney_corners.jpg" alt="Chimney (middle image): all Harris corners vs. after ANMS" loading="lazy"><figcaption>Chimney (middle image): all Harris corners vs. after ANMS</figcaption></figure>
+<p>To better illustrate how useful ANMS is, on the left we show the corners we'd get if we simply sort all the corners by strength and keep the top 500. We see that these points cluster in high-contrast regions, whereas points we get from ANMS are much more evenly distributed.</p>
+
+<figure class="wide"><img src="images/cs180-proj4/b_wall_top_vs_anms.jpg" alt="Wall: 500 strongest corners vs. 500 corners from ANMS" loading="lazy"><figcaption>Wall: 500 strongest corners vs. 500 corners from ANMS</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_door_top_vs_anms.jpg" alt="Door: 500 strongest corners vs. 500 corners from ANMS" loading="lazy"><figcaption>Door: 500 strongest corners vs. 500 corners from ANMS</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_chimney_top_vs_anms.jpg" alt="Chimney: 500 strongest corners vs. 500 corners from ANMS" loading="lazy"><figcaption>Chimney: 500 strongest corners vs. 500 corners from ANMS</figcaption></figure>
+</section>
+<section id="b2"><h2>B.2 &nbsp;Feature Descriptor Extraction</h2><p>We now give each point a descriptor: a vector summarizing its local appearance. We account for localization error by using Gaussian blurring and subsampling patches. We account for lighting and exposure differences by normalizing each descriptor to zero mean and unit standard deviation.</p>
+
+<details class="code"><summary>Implementation: <code>extract_descriptors</code></summary><pre><code class="language-python">WINDOW, DESC_SIZE = 40, 8
+SPACING = WINDOW // DESC_SIZE  # 5
+OFFSETS = np.arange(DESC_SIZE) * SPACING - (WINDOW // 2 - SPACING // 2)  # [-18, -13, ..., 17], centered
+
+
+def extract_descriptors(gray, pts, sigma=2.0):
+    &quot;&quot;&quot;Axis-aligned 8x8 descriptors sampled every 5 px from a blurred 40x40 window,
+    bias/gain normalized. Returns (n, 64).&quot;&quot;&quot;
+    blurred = gaussian_filter(gray, sigma)
+    xs = pts[:, 0].astype(int)[:, None, None] + OFFSETS[None, None, :]
+    ys = pts[:, 1].astype(int)[:, None, None] + OFFSETS[None, :, None]
+    patches = blurred[ys, xs]  # (n, 8, 8)
+    patches = patches - patches.mean(axis=(1, 2), keepdims=True)
+    patches = patches / (patches.std(axis=(1, 2), keepdims=True) + 1e-8)
+    return patches.reshape(len(pts), -1)
+
+
+def raw_window(gray, pt):
+    x, y = int(pt[0]), int(pt[1])
+    return gray[y - WINDOW // 2:y + WINDOW // 2, x - WINDOW // 2:x + WINDOW // 2]</code></pre></details>
+<figure class="wide"><img src="images/cs180-proj4/b_descriptors.jpg" alt="Sampled features: location, raw 40x40 window, and normalized 8x8 descriptor" loading="lazy"><figcaption>Sampled features: location, raw 40x40 window, and normalized 8x8 descriptor</figcaption></figure>
+</section>
+<section id="b3"><h2>B.3 &nbsp;Feature Matching</h2><p>For each descriptor in image one, we find the closest and the second-closest descriptor in image two. We keep a match between corners only if the match is significantly better than the next best match.</p>
+
+<details class="code"><summary>Implementation: <code>match_features</code></summary><pre><code class="language-python">RATIO = 0.5  # threshold on e_1NN / e_2NN (squared errors), from Figure 6b of the paper
+
+
+def match_features(desc1, desc2, ratio=RATIO):
+    &quot;&quot;&quot;Lowe ratio test on squared SSD. Returns (idx1, idx2, ratios) for accepted matches.&quot;&quot;&quot;
+    E = dist2(desc1, desc2)
+    nn = np.argsort(E, axis=1)[:, :2]
+    e1 = E[np.arange(len(E)), nn[:, 0]]
+    e2 = E[np.arange(len(E)), nn[:, 1]]
+    r = e1 / np.maximum(e2, 1e-12)
+    keep = r &lt; ratio
+    return np.flatnonzero(keep), nn[keep, 0], r[keep]
+
+
+def plot_matches(im1, im2, p1, p2, title, inliers=None, save=None):
+    &quot;&quot;&quot;Draw matches as lines between side-by-side images. If `inliers` is given, outliers are red.&quot;&quot;&quot;
+    h = max(im1.shape[0], im2.shape[0])
+    pad = lambda im: np.pad(im, ((0, h - im.shape[0]), (0, 0), (0, 0)))
+    canvas, off = np.hstack([pad(im1), pad(im2)]), im1.shape[1]
+    inliers = np.ones(len(p1), bool) if inliers is None else inliers
+    fig, ax = plt.subplots(figsize=(18, 18 * h / canvas.shape[1]))
+    ax.imshow(canvas)
+    for (x1, y1), (x2, y2), ok in zip(p1, p2, inliers):
+        c = &#x27;lime&#x27; if ok else &#x27;red&#x27;
+        ax.plot([x1, x2 + off], [y1, y2], &#x27;-&#x27;, color=c, lw=0.8, alpha=0.8)
+        ax.plot([x1, x2 + off], [y1, y2], &#x27;o&#x27;, color=c, ms=3)
+    ax.set_title(title); ax.axis(&#x27;off&#x27;)
+    plt.tight_layout()
+    if save:
+        fig.savefig(OUT / save, bbox_inches=&#x27;tight&#x27;, dpi=150)
+    plt.show()</code></pre></details>
+<p>The figure draws a line from each kept feature in image 1 to its partner in image 2.</p>
+
+<figure class="wide"><img src="images/cs180-proj4/b_wall_0_1_matches.jpg" alt="Wall: images 0 and 1, matches passing the ratio test" loading="lazy"><figcaption>Wall: images 0 and 1, matches passing the ratio test</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_wall_1_2_matches.jpg" alt="Wall: images 1 and 2, matches passing the ratio test" loading="lazy"><figcaption>Wall: images 1 and 2, matches passing the ratio test</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_door_0_1_matches.jpg" alt="Door: images 0 and 1, matches passing the ratio test" loading="lazy"><figcaption>Door: images 0 and 1, matches passing the ratio test</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_door_1_2_matches.jpg" alt="Door: images 1 and 2, matches passing the ratio test" loading="lazy"><figcaption>Door: images 1 and 2, matches passing the ratio test</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_chimney_0_1_matches.jpg" alt="Chimney: images 0 and 1, matches passing the ratio test" loading="lazy"><figcaption>Chimney: images 0 and 1, matches passing the ratio test</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_chimney_1_2_matches.jpg" alt="Chimney: images 1 and 2, matches passing the ratio test" loading="lazy"><figcaption>Chimney: images 1 and 2, matches passing the ratio test</figcaption></figure>
+<p>We show the distribution of the 1-NN / 2-NN ratio over all features.</p>
+<p>Our histogram is roughly flat from 0 to 0.4 (mostly true matches) and climbs steeply into a large spike above about 0.7 (features with no reliable match), so a cutoff of 0.5 sits in the dip between the two groups and keeps most of the flat region while rejecting nearly all of the spike.</p>
+
+<figure class="narrow"><img src="images/cs180-proj4/b_ratio_hist.jpg" alt="Distribution of the 1-NN / 2-NN ratio over all features" loading="lazy"><figcaption>Distribution of the 1-NN / 2-NN ratio over all features</figcaption></figure>
+</section>
+<section id="b4"><h2>B.4 &nbsp;RANSAC and Automatic Mosaics</h2><p>We perform RANSAC:</p>
+<ol>
+<li>Pick 4 random matches and compute the exact H through them.</li>
+<li>Apply that H to all the matches and count how many are inliers.</li>
+<li>Repeat many times (2000 in our code), and keep the H with the most inliers.</li>
+<li>Refit H by least squares using only those inliers.</li>
+</ol>
+
+<details class="code"><summary>Implementation: <code>ransac_homography</code></summary><pre><code class="language-python">def ransac_homography(p1, p2, n_iters=2000, eps=2.0, seed=0):
+    &quot;&quot;&quot;4-point RANSAC. Returns (H refit on all inliers, inlier mask).&quot;&quot;&quot;
+    rng = np.random.default_rng(seed)
+    best = np.zeros(len(p1), bool)
+    for _ in range(n_iters):
+        idx = rng.choice(len(p1), 4, replace=False)
+        H = computeH(p1[idx], p2[idx])
+        if not np.all(np.isfinite(H)):
+            continue
+        with np.errstate(divide=&#x27;ignore&#x27;, invalid=&#x27;ignore&#x27;):
+            err = np.linalg.norm(apply_homography(H, p1) - p2, axis=1)
+        inliers = err &lt; eps
+        if inliers.sum() &gt; best.sum():
+            best = inliers
+    return computeH(p1[best], p2[best]), best</code></pre></details>
+<figure class="wide"><img src="images/cs180-proj4/b_wall_0_1_ransac.jpg" alt="Wall: images 0 and 1, RANSAC inliers (green) and outliers (red)" loading="lazy"><figcaption>Wall: images 0 and 1, RANSAC inliers (green) and outliers (red)</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_wall_1_2_ransac.jpg" alt="Wall: images 1 and 2, RANSAC inliers (green) and outliers (red)" loading="lazy"><figcaption>Wall: images 1 and 2, RANSAC inliers (green) and outliers (red)</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_door_0_1_ransac.jpg" alt="Door: images 0 and 1, RANSAC inliers (green) and outliers (red)" loading="lazy"><figcaption>Door: images 0 and 1, RANSAC inliers (green) and outliers (red)</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_door_1_2_ransac.jpg" alt="Door: images 1 and 2, RANSAC inliers (green) and outliers (red)" loading="lazy"><figcaption>Door: images 1 and 2, RANSAC inliers (green) and outliers (red)</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_chimney_0_1_ransac.jpg" alt="Chimney: images 0 and 1, RANSAC inliers (green) and outliers (red)" loading="lazy"><figcaption>Chimney: images 0 and 1, RANSAC inliers (green) and outliers (red)</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_chimney_1_2_ransac.jpg" alt="Chimney: images 1 and 2, RANSAC inliers (green) and outliers (red)" loading="lazy"><figcaption>Chimney: images 1 and 2, RANSAC inliers (green) and outliers (red)</figcaption></figure>
+<h3>Manual vs. automatic</h3><p>“Manual” is the homography computed from the correspondence points we clicked by hand in Part A. “Automatic” is the homography this pipeline finds without any clicking. We compare the results below.</p>
+
+<table><tr><th>Pair</th><th>Manual H</th><th>Automatic H</th></tr><tr><td>wall 0 &rarr; 1</td><td>0.33 px</td><td>1.62 px</td></tr><tr><td>wall 1 &rarr; 2</td><td>0.34 px</td><td>1.73 px</td></tr><tr><td>door 0 &rarr; 1</td><td>0.41 px</td><td>2.00 px</td></tr><tr><td>door 1 &rarr; 2</td><td>0.20 px</td><td>0.85 px</td></tr><tr><td>chimney 0 &rarr; 1</td><td>0.43 px</td><td>1.42 px</td></tr><tr><td>chimney 1 &rarr; 2</td><td>0.27 px</td><td>0.54 px</td></tr></table><p class="note">Mean reprojection error on the Part A correspondence points.</p>
+<h3>Wall</h3><figure class="wide mosaic"><img src="images/cs180-proj4/b_wall_manual_vs_auto.jpg" alt="Manual (left) vs. automatic (right)" loading="lazy"><figcaption>Manual (left) vs. automatic (right)</figcaption></figure>
+<h3>Door</h3><figure class="wide mosaic"><img src="images/cs180-proj4/b_door_manual_vs_auto.jpg" alt="Manual (left) vs. automatic (right)" loading="lazy"><figcaption>Manual (left) vs. automatic (right)</figcaption></figure>
+<h3>Chimney</h3><figure class="wide mosaic"><img src="images/cs180-proj4/b_chimney_manual_vs_auto.jpg" alt="Manual (left) vs. automatic (right)" loading="lazy"><figcaption>Manual (left) vs. automatic (right)</figcaption></figure>
+<h3>Experiment: sloppier clicks</h3><h3>Experiment: sloppier clicks</h3>
+<p>The Part A points were clicked very carefully. To see how sensitive manual stitching is to click accuracy, this
+<strong>simulates</strong> a less careful person: every manual point (in both images) is moved by Gaussian noise with
+standard deviation <code>CLICK_SIGMA</code> pixels, and the homography is refit. The original Part A mosaic is unchanged.
+Errors are measured on the original (careful) clicks.</p>
+
+<figure class="narrow"><img src="images/cs180-proj4/b_click_noise_curve.jpg" alt="Error vs. simulated click noise" loading="lazy"><figcaption>Error vs. simulated click noise</figcaption></figure>
+<figure class="wide mosaic"><img src="images/cs180-proj4/b_wall_sloppy_vs_auto.jpg" alt="Wall: careful clicks, simulated sloppy clicks, automatic" loading="lazy"><figcaption>Wall: careful clicks, simulated sloppy clicks, automatic</figcaption></figure>
+<figure class="wide mosaic"><img src="images/cs180-proj4/b_door_sloppy_vs_auto.jpg" alt="Door: careful clicks, simulated sloppy clicks, automatic" loading="lazy"><figcaption>Door: careful clicks, simulated sloppy clicks, automatic</figcaption></figure>
+<figure class="wide mosaic"><img src="images/cs180-proj4/b_chimney_sloppy_vs_auto.jpg" alt="Chimney: careful clicks, simulated sloppy clicks, automatic" loading="lazy"><figcaption>Chimney: careful clicks, simulated sloppy clicks, automatic</figcaption></figure>
+<p>Zooming in, we see that misalignment shows up as ghosting:</p>
+
+<figure class="wide"><img src="images/cs180-proj4/b_wall_sloppy_zoom.jpg" alt="Wall: zoom on the left seam" loading="lazy"><figcaption>Wall: zoom on the left seam</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_door_sloppy_zoom.jpg" alt="Door: zoom on the left seam" loading="lazy"><figcaption>Door: zoom on the left seam</figcaption></figure>
+<figure class="wide"><img src="images/cs180-proj4/b_chimney_sloppy_zoom.jpg" alt="Chimney: zoom on the left seam" loading="lazy"><figcaption>Chimney: zoom on the left seam</figcaption></figure>
 </section>
 <section id="ack"><h2>Acknowledgements</h2><p>This project was super fun! I&#x27;d like to thank Claude for assistance with skeleton functions, helper functions, conceptual help, general formatting, and polishing my writing.</p></section>
 </main>
