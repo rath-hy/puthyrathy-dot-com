@@ -284,6 +284,10 @@
       date: '2026-11-13',
       text: "Cubism, properly. The first demo, a portrait painted onto the cubes, was a promising jumble, but the model didn't match the real tessellation, so I marked up the missing and extra faces and fixed it. Then I spent a while working out what cubism on folded paper should even mean, and changed my mind several times. Where I landed: head-on is the artwork, and it's where the guitar's outline is clearest, while every face holds its own fragment of the guitar from its own angle. The faces of one axis show front views, another side views, the third views down the neck, so tilting the model toward any axis shows only a jumble of that axis's fragments. Prompts can't reliably ask for a viewpoint, so the composition comes from a simple 3D guitar instead, and Stable Diffusion XL with a ControlNet paints it in bold colors and hard edges. I tried a cubist still life around the guitar and took it out again. The result is abstract enough that my class might think it's a fluke, so I also built a page where you click any face and trace it back through the edge lines it followed, the fragment it came from, and its window onto the 3D guitar. It still shows stand-in colors until I export the real painting.",
     },
+    {
+      date: '2026-11-14',
+      text: "No making today, just the first proper team meeting for the folded illusions project. We leaned on the onboarding page and the proposal and split up the work. Akhil takes the ChArUco photo maps, with the goal of mapping origami that doesn't fold flat, and the ultimate test is an origami hand. Krish takes illusions that change when you rotate a flap, which might mean designing our own origami, since I don't know of a model that has rotating flaps. Bryan takes telling a story across three or more folding stages, ideally with a model that shows both sides of the paper. Afterwards I wrote up notes for everyone. We meet again Thursday, prototypes in hand.",
+    },
   ];
 
   const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
